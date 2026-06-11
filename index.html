@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLA semanal · Cereza</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+ :root{--paper:#F4F1EA;--ink:#13171E;--muted:#6E6B62;--line:#E4DFD4;--central:#1F4E6B;--cc:#D8682F}
+ *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px}
+ .wrap{max-width:980px;margin:0 auto;padding:16px}
+ h1{font-size:22px;margin:2px 0 0}.tag{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--cc);font-weight:700}
+ .sub{color:var(--muted);font-size:12px;margin-top:4px}
+ .seglbl{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+ .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+ .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+ .seg button{border:0;background:transparent;padding:10px 16px;font-size:14px;font-weight:600;color:var(--muted)}
+ .seg button.active{background:var(--ink);color:#fff}button{cursor:pointer}
+ .copy{margin-left:auto;border:1.5px solid var(--ink);background:#fff;border-radius:10px;padding:9px 14px;font-weight:600}
+ .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px;box-shadow:0 8px 24px rgba(20,24,31,.06)}
+ h3{font-size:14px;margin:0 0 8px}.scroll{overflow-x:auto}
+ table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+ th,td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+ th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+ thead th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:2px solid var(--ink)}
+ th.cg{color:var(--central)}th.wg{color:var(--cc)}
+ tr.tot td{font-weight:700;border-top:2px solid var(--ink);background:#f7f5ef}
+ td.g{background:#e7f4ec;color:#1f6b46;font-weight:600}td.a{background:#fbf3da;color:#6b5300;font-weight:600}td.b{background:#f8e6e1;color:#8f3322;font-weight:600}
+ .chartbox{position:relative;height:240px}
+ footer{color:var(--muted);font-size:11px;margin-top:8px;line-height:1.5}
+</style></head>
+<body><div class="wrap">
+ <div class="tag">Customer Care</div><h1>SLA semanal</h1><div class="sub" id="sub"></div>
+ <div class="bar">
+  <span class="seg" id="seg"><button data-w="mon" class="active">Lun-Dom</button><button data-w="fri">Vie-Jue</button></span>
+  <span class="seglbl">Canal</span>
+  <span class="seg" id="chan"><button data-c="C" class="active">Central</button><button data-c="CC" class="active">Conecta Conductor</button></span>
+  <button class="copy" id="copy">Copiar tabla</button>
+ </div>
+ <div class="panel"><h3>SLA % por semana</h3><div class="chartbox"><canvas id="ch"></canvas></div></div>
+ <div class="panel"><h3 id="tt">Detalle</h3><div class="scroll"><table id="tb"></table></div></div>
+ <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 11/06/2026.</footer>
+</div>
+<script>
+const DATA={"src": "85.381 llamadas · 43.504 WhatsApp · 01/01/2026 - 04/06/2026", "mon": {"weeks": [{"label": "26 - Sem. 01", "rng": "29/12 – 04/01", "lc": [895, 755], "lk": [15, 4], "wc": [0, 0], "wk": [0, 0]}, {"label": "26 - Sem. 02", "rng": "05/01 – 11/01", "lc": [3141, 2591], "lk": [76, 61], "wc": [0, 0], "wk": [0, 0]}, {"label": "26 - Sem. 03", "rng": "12/01 – 18/01", "lc": [4034, 3097], "lk": [102, 59], "wc": [1626, 1137], "wk": [336, 124]}, {"label": "26 - Sem. 04", "rng": "19/01 – 25/01", "lc": [4077, 3084], "lk": [58, 44], "wc": [1804, 1147], "wk": [377, 184]}, {"label": "26 - Sem. 05", "rng": "26/01 – 01/02", "lc": [3855, 2873], "lk": [71, 57], "wc": [1550, 1080], "wk": [440, 206]}, {"label": "26 - Sem. 06", "rng": "02/02 – 08/02", "lc": [4186, 3137], "lk": [78, 63], "wc": [1745, 1295], "wk": [469, 239]}, {"label": "26 - Sem. 07", "rng": "09/02 – 15/02", "lc": [4381, 3084], "lk": [67, 53], "wc": [2021, 1364], "wk": [380, 236]}, {"label": "26 - Sem. 08", "rng": "16/02 – 22/02", "lc": [4146, 3076], "lk": [66, 48], "wc": [1767, 1256], "wk": [328, 171]}, {"label": "26 - Sem. 09", "rng": "23/02 – 01/03", "lc": [4140, 2983], "lk": [55, 43], "wc": [1704, 1165], "wk": [332, 167]}, {"label": "26 - Sem. 10", "rng": "02/03 – 08/03", "lc": [3928, 3398], "lk": [90, 62], "wc": [1759, 1387], "wk": [583, 167]}, {"label": "26 - Sem. 11", "rng": "09/03 – 15/03", "lc": [3698, 3376], "lk": [101, 85], "wc": [1682, 1344], "wk": [533, 209]}, {"label": "26 - Sem. 12", "rng": "16/03 – 22/03", "lc": [4086, 3390], "lk": [86, 77], "wc": [1925, 1425], "wk": [443, 193]}, {"label": "26 - Sem. 13", "rng": "23/03 – 29/03", "lc": [4009, 3531], "lk": [106, 84], "wc": [2024, 1621], "wk": [381, 175]}, {"label": "26 - Sem. 14", "rng": "30/03 – 05/04", "lc": [3042, 2540], "lk": [76, 69], "wc": [1441, 1167], "wk": [327, 145]}, {"label": "26 - Sem. 15", "rng": "06/04 – 12/04", "lc": [3451, 3023], "lk": [104, 82], "wc": [1632, 1327], "wk": [460, 235]}, {"label": "26 - Sem. 16", "rng": "13/04 – 19/04", "lc": [3989, 3431], "lk": [76, 56], "wc": [1804, 1445], "wk": [342, 173]}, {"label": "26 - Sem. 17", "rng": "20/04 – 26/04", "lc": [4003, 3478], "lk": [96, 87], "wc": [1752, 1464], "wk": [344, 198]}, {"label": "26 - Sem. 18", "rng": "27/04 – 03/05", "lc": [3871, 2943], "lk": [93, 70], "wc": [1517, 1118], "wk": [344, 193]}, {"label": "26 - Sem. 19", "rng": "04/05 – 10/05", "lc": [3590, 3215], "lk": [170, 136], "wc": [1617, 1285], "wk": [537, 253]}, {"label": "26 - Sem. 20", "rng": "11/05 – 17/05", "lc": [3270, 2951], "lk": [97, 54], "wc": [1721, 1394], "wk": [297, 152]}, {"label": "26 - Sem. 21", "rng": "18/05 – 24/05", "lc": [3593, 3223], "lk": [102, 56], "wc": [1525, 1261], "wk": [335, 127]}, {"label": "26 - Sem. 22", "rng": "25/05 – 31/05", "lc": [3497, 3152], "lk": [111, 30], "wc": [1563, 1268], "wk": [271, 119]}, {"label": "26 - Sem. 23", "rng": "01/06 – 07/06", "lc": [2491, 2255], "lk": [95, 23], "wc": [973, 803], "wk": [218, 94]}], "periodo": {"label": "Periodo", "rng": "—", "lc": [83373, 68586], "lk": [1991, 1403], "wc": [35152, 26753], "wk": [8077, 3760]}}, "fri": {"weeks": [{"label": "26 - Sem. 01", "rng": "26/12 – 01/01", "lc": [169, 143], "lk": [0, 0], "wc": [0, 0], "wk": [0, 0]}, {"label": "26 - Sem. 02", "rng": "02/01 – 08/01", "lc": [2660, 2292], "lk": [77, 58], "wc": [0, 0], "wk": [0, 0]}, {"label": "26 - Sem. 03", "rng": "09/01 – 15/01", "lc": [3873, 3064], "lk": [101, 54], "wc": [997, 713], "wk": [233, 77]}, {"label": "26 - Sem. 04", "rng": "16/01 – 22/01", "lc": [4115, 3060], "lk": [65, 52], "wc": [1799, 1136], "wk": [388, 184]}, {"label": "26 - Sem. 05", "rng": "23/01 – 29/01", "lc": [3747, 2874], "lk": [60, 45], "wc": [1646, 1159], "wk": [370, 174]}, {"label": "26 - Sem. 06", "rng": "30/01 – 05/02", "lc": [4020, 3123], "lk": [79, 63], "wc": [1722, 1291], "wk": [506, 253]}, {"label": "26 - Sem. 07", "rng": "06/02 – 12/02", "lc": [4472, 3125], "lk": [60, 52], "wc": [1891, 1292], "wk": [404, 230]}, {"label": "26 - Sem. 08", "rng": "13/02 – 19/02", "lc": [4296, 3015], "lk": [71, 50], "wc": [1831, 1265], "wk": [314, 176]}, {"label": "26 - Sem. 09", "rng": "20/02 – 26/02", "lc": [3956, 3002], "lk": [60, 48], "wc": [1752, 1244], "wk": [347, 189]}, {"label": "26 - Sem. 10", "rng": "27/02 – 05/03", "lc": [4125, 3307], "lk": [84, 53], "wc": [1821, 1355], "wk": [492, 153]}, {"label": "26 - Sem. 11", "rng": "06/03 – 12/03", "lc": [3794, 3388], "lk": [97, 82], "wc": [1600, 1271], "wk": [599, 208]}, {"label": "26 - Sem. 12", "rng": "13/03 – 19/03", "lc": [4054, 3373], "lk": [87, 78], "wc": [1923, 1388], "wk": [452, 193]}, {"label": "26 - Sem. 13", "rng": "20/03 – 26/03", "lc": [3893, 3496], "lk": [102, 83], "wc": [2054, 1681], "wk": [390, 177]}, {"label": "26 - Sem. 14", "rng": "27/03 – 02/04", "lc": [3774, 3097], "lk": [98, 85], "wc": [1613, 1262], "wk": [379, 180]}, {"label": "26 - Sem. 15", "rng": "03/04 – 09/04", "lc": [3096, 2660], "lk": [87, 72], "wc": [1564, 1271], "wk": [411, 208]}, {"label": "26 - Sem. 16", "rng": "10/04 – 16/04", "lc": [3677, 3300], "lk": [84, 59], "wc": [1683, 1384], "wk": [357, 186]}, {"label": "26 - Sem. 17", "rng": "17/04 – 23/04", "lc": [3890, 3303], "lk": [89, 79], "wc": [1774, 1434], "wk": [336, 183]}, {"label": "26 - Sem. 18", "rng": "24/04 – 30/04", "lc": [4481, 3457], "lk": [108, 85], "wc": [1640, 1297], "wk": [374, 213]}, {"label": "26 - Sem. 19", "rng": "01/05 – 07/05", "lc": [3357, 3003], "lk": [138, 107], "wc": [1544, 1184], "wk": [478, 207]}, {"label": "26 - Sem. 20", "rng": "08/05 – 14/05", "lc": [3441, 3061], "lk": [114, 73], "wc": [1656, 1321], "wk": [364, 196]}, {"label": "26 - Sem. 21", "rng": "15/05 – 21/05", "lc": [3328, 3036], "lk": [91, 55], "wc": [1605, 1333], "wk": [309, 132]}, {"label": "26 - Sem. 22", "rng": "22/05 – 28/05", "lc": [3487, 3149], "lk": [112, 42], "wc": [1530, 1238], "wk": [279, 124]}, {"label": "26 - Sem. 23", "rng": "29/05 – 04/06", "lc": [3668, 3258], "lk": [127, 28], "wc": [1507, 1234], "wk": [295, 117]}], "periodo": {"label": "Periodo", "rng": "—", "lc": [83373, 68586], "lk": [1991, 1403], "wc": [35152, 26753], "wk": [8077, 3760]}}}; let mode='mon', chart=null; const SEL={C:true,CC:true};
+const fmt=v=>v==null?'-':(v*100).toFixed(1)+'%';
+const cls=v=>v==null?'':(v>=.8?'g':v>=.7?'a':'b');
+const sla=p=>(p&&p[0])?p[1]/p[0]:null;
+function chans(){const a=[];if(SEL.C)a.push({k:'C',ln:'lc',wn:'wc',nm:'Central'});if(SEL.CC)a.push({k:'CC',ln:'lk',wn:'wk',nm:'C.Cond.'});return a;}
+function tot(o,med){let d=0,n=0;chans().forEach(c=>{const p=o[med==='l'?c.ln:c.wn];d+=p[0];n+=p[1];});return d?n/d:null;}
+function render(){
+  const d=DATA[mode],rows=d.weeks,cs=chans(),both=cs.length>1;
+  document.getElementById('sub').textContent=DATA.src;
+  document.getElementById('tt').textContent='SLA por semana - corte '+(mode==='fri'?'Vie-Jue':'Lun-Dom');
+  const cols=[{t:'Semana'},{t:'Rango'}];
+  cs.forEach(c=>cols.push({t:'Llam. '+c.nm,g:'cg'})); if(both)cols.push({t:'Llam. Total',g:'cg'});
+  cs.forEach(c=>cols.push({t:'WA '+c.nm,g:'wg'})); if(both)cols.push({t:'WA Total',g:'wg'});
+  let h='<thead><tr>'+cols.map(c=>'<th class="'+(c.g||'')+'">'+c.t+'</th>').join('')+'</tr></thead><tbody>';
+  const cells=o=>{const a=[];cs.forEach(c=>a.push(sla(o[c.ln])));if(both)a.push(tot(o,'l'));cs.forEach(c=>a.push(sla(o[c.wn])));if(both)a.push(tot(o,'w'));return a;};
+  const row=(o,t)=>'<tr class="'+(t?'tot':'')+'"><td>'+o.label+'</td><td>'+o.rng+'</td>'+cells(o).map(v=>'<td class="'+cls(v)+'">'+fmt(v)+'</td>').join('')+'</tr>';
+  rows.forEach(o=>h+=row(o,false));h+=row(d.periodo,true)+'</tbody>';
+  document.getElementById('tb').innerHTML=h;
+  const labels=rows.map(o=>o.label),ds=[];
+  cs.forEach(c=>{const col=c.k==='C'?'#1F4E6B':'#D8682F';
+    ds.push({label:'Llam. '+c.nm,data:rows.map(o=>{const v=sla(o[c.ln]);return v==null?null:+(v*100).toFixed(1);}),borderColor:col,backgroundColor:col,borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});
+    ds.push({label:'WA '+c.nm,data:rows.map(o=>{const v=sla(o[c.wn]);return v==null?null:+(v*100).toFixed(1);}),borderColor:col,backgroundColor:col,borderDash:[5,4],borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});});
+  ds.push({label:'Meta 80%',data:labels.map(()=>80),borderColor:'#9a958a',borderDash:[2,3],borderWidth:1.2,pointRadius:0});
+  if(window.Chart){if(chart)chart.destroy();
+   chart=new Chart(document.getElementById('ch'),{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}},x:{ticks:{maxRotation:60,autoSkip:true,maxTicksLimit:26,font:{size:10}}}}}});}
+}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{mode=b.dataset.w;document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('active',x===b));render();});
+document.querySelectorAll('#chan button').forEach(b=>b.onclick=()=>{const c=b.dataset.c,o=c==='C'?'CC':'C';if(SEL[c]&&!SEL[o])return;SEL[c]=!SEL[c];b.classList.toggle('active',SEL[c]);render();});
+document.getElementById('copy').onclick=()=>{const t=document.getElementById('tb').innerText;if(navigator.clipboard)navigator.clipboard.writeText(t);const b=document.getElementById('copy');b.textContent='\u2713 Copiada';setTimeout(()=>b.textContent='Copiar tabla',1500);};
+render();
+</script></body></html>
