@@ -64,6 +64,14 @@
  td.g{background:var(--good-bg);color:#0B6B37;font-weight:600}
  td.a{background:var(--warn-bg);color:#7A5600;font-weight:600}
  td.b{background:var(--bad-bg);color:#A32820;font-weight:600}
+ .cxl{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;margin-right:4px}
+ .cxl.ok,td.cxd.ok{background:var(--good-bg);color:#0B6B37}
+ .cxl.tarde,td.cxd.tarde{background:var(--warn-bg);color:#7A5600}
+ .cxl.falta,td.cxd.falta{background:var(--bad-bg);color:#A32820}
+ .cxl.extra,td.cxd.extra{background:#E6EEFE;color:#1D4FD0}
+ .cxl.ds,td.cxd.ds{background:var(--surface-2);color:var(--faint)}
+ td.cxd{font-size:12px;white-space:nowrap;line-height:1.3;text-align:center}
+ td.cxd small{display:block;font-size:10.5px;font-weight:600;opacity:.85}
  /* ---- heatmap ---- */
  .hm{border-collapse:separate;border-spacing:2px;font-size:11px;min-width:520px}
  .hm th{background:transparent;color:var(--faint);font-weight:600;border:0;padding:2px 3px;text-align:center;font-size:10px}
@@ -199,6 +207,7 @@
    <button data-t="wa">WhatsApp</button>
    <button data-t="agente">Agente</button>
    <button data-t="prod">Productividad</button>
+   <button data-t="conex">Conexión</button>
  </nav>
 
  <div class="tabview" data-tab="general">
@@ -295,10 +304,22 @@
    </div>
  </div>
 
+ <div class="tabview" data-tab="conex" hidden>
+   <div class="panel"><div class="phead"><h3>Conexión por agente</h3><div class="dayctrls"><div class="miniseg conexp"><button type="button" data-exp="1">Expandir</button><button type="button" data-exp="0">Contraer</button></div><button class="copy mini" data-copy="tbConex">Copiar</button></div></div>
+     <div class="sub2">Horas reales de conexión (inicio y cierre de sesión en <b>telefonía y WhatsApp</b>, unidos) comparadas con el <b>horario programado</b>. Tardanza y salida anticipada cuentan a partir de 5 min de tolerancia; en turnos partidos se mide cada tramo. <b>Cobertura</b> = % del horario programado en que estuvo conectado. Respeta el filtro de Semanas. Toca el ▸ de un agente para ver el detalle por día.</div>
+     <div class="scroll"><table id="tbConex" style="min-width:0"></table></div>
+     <div class="sub2" style="margin-top:10px">La conexión se mide con el ingreso a la <b>cola telefónica</b>; WhatsApp sólo se usa los días en que el agente no entró a la cola (la sesión de WhatsApp suele quedar abierta después del turno). * = no cerró sesión (se corta en su última actividad). ⚠ = sesión de más de 12 h (probablemente dejó la sesión abierta). El turno noche (22:00–06:00) se cuenta en el día en que empieza. Sin horario cargado se muestran las horas pero no se evalúa tardanza.</div>
+   </div>
+   <div class="panel"><div class="phead"><h3>Semana día por día</h3><div class="dayctrls"><select id="conexWk" style="height:36px;font-size:13px"></select><button class="copy mini" data-copy="tbConexWk">Copiar</button></div></div>
+     <div class="sub2">Primera conexión – última desconexión de cada día. <span class="cxl ok">a tiempo</span> <span class="cxl tarde">tardanza / salida antes</span> <span class="cxl falta">falta o tramo sin conexión</span> <span class="cxl extra">conectado en día libre</span> <span class="cxl ds">descanso / vacaciones</span></div>
+     <div class="scroll"><table id="tbConexWk" style="min-width:0"></table></div>
+   </div>
+ </div>
+
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 17/10/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=20261017"></script>
-<script src="sla_data_2.js?v=20261017"></script>
+<script src="sla_data_1.js?v=20261017c"></script>
+<script src="sla_data_2.js?v=20261017c"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -661,7 +682,7 @@ function buildChatTree(days){const byW={};(days||[]).filter(d=>isSel(d.wl)).forE
     const ag=aggNode(dn);return {label:wl,n:ag.n,seg:ag.seg,mx:ag.mx,children:dn};});}
 function treeHTML(nodes,level,pid){let h='';nodes.forEach((nd,i)=>{const id=pid+'_'+i,hasK=nd.children&&nd.children.length;
   h+='<div class="trow lvl'+Math.min(level,3)+(nd.warn?' warn':'')+(nd.leaf?' evrow':'')+'" data-node="'+id+'"'+(level>0?' data-parent="'+pid+'" style="display:none"':'')+'>';
-  h+='<span class="tlabel" style="padding-left:'+(level*16)+'px">'+(hasK?'<span class="cx" data-tg="'+id+'">▸</span>':'<span class="cx2"></span>')+(nd.warn?'⚠ ':'')+nd.label+'</span>';
+  h+='<span class="tlabel" style="padding-left:'+(level*16)+'px">'+(hasK?'<span class="cxd" data-tg="'+id+'">▸</span>':'<span class="cx2"></span>')+(nd.warn?'⚠ ':'')+nd.label+'</span>';
   h+='<span>'+nd.n+'</span><span>'+fmtHM(nd.n?nd.seg/nd.n:0)+'</span><span'+(nd.over?' class="tover"':'')+'>'+fmtHM(nd.seg)+'</span><span>'+fmtHM(nd.mx)+'</span></div>';
   if(hasK)h+=treeHTML(nd.children,level+1,id);});return h;}
 function treeSetExpand(elId,mode){const el=$(elId);if(!el)return;
@@ -784,10 +805,71 @@ function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
   $('tbProd').innerHTML=h+(list.length?'':'<tr><td>Sin datos.</td></tr>')+'</tbody>';}
 function setAllProd(open){const P=DATA[mode].prod;if(!P)return;if(open)(P.rows||[]).forEach(r=>prodOpen.add(r.name));else prodOpen.clear();renderProd();}
 
+/* ---- conexión por agente ---- */
+let conexOpen=new Set();
+const CX_EST={encurso:'Turno en curso',ok:'A tiempo',tarde:'Tardanza',sal:'Salida antes',tarde_sal:'Tardanza y salida antes',parcial:'Tramo sin conexión',falta:'Falta',extra:'Conectado en día libre',ds:'Descanso',vac:'Vacaciones',lic:'Licencia',sinh:'Sin horario'};
+const cxCls=e=>e==='ok'?'ok':(e==='tarde'||e==='sal'||e==='tarde_sal')?'tarde':(e==='falta'||e==='parcial')?'falta':e==='extra'?'extra':(e==='ds'||e==='vac'||e==='lic')?'ds':'';
+const cxH=s=>s==null?'-':(s/3600).toFixed(1)+' h';
+const cxMin=m=>!m?'':(m>=60?Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m':m+' min');
+const cxRange=d=>d.ini?(d.ini+'–'+d.fin+(d.fin1?' (+1)':'')+(d.abierta?' *':'')+(d.larga?' ⚠':'')):'—';
+function cxAvgTime(list){const v=list.filter(Boolean).map(t=>{const[h,m]=t.split(':').map(Number);return h*60+m;});if(!v.length)return '-';const a=Math.round(v.reduce((x,y)=>x+y,0)/v.length);return String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');}
+function cxDayRow(d){const c=cxCls(d.est);
+  const fin=d.fin?(d.fin+(d.fin1?' (+1)':'')+(d.abierta?' *':'')):'—';
+  return '<tr class="prow"><td><span class="dind">↳</span> '+DOWL[d.dw]+' '+d.dt+'</td><td>'+(d.prog||'sin horario')+'</td><td>'+(d.ini||'—')+'</td><td>'+fin+'</td><td class="cxd '+c+'">'+(CX_EST[d.est]||'')+(d.incompleto?' (en curso)':'')+(d.larga?' ⚠':'')+'</td><td>'+(d.tard?cxMin(d.tard):'')+'</td><td>'+(d.sal?cxMin(d.sal):'')+'</td><td>'+cxH(d.hc)+'</td><td>'+(d.ph?cxH(d.ph):'—')+'</td><td>'+(d.cob!=null?Math.round(d.cob*100)+'%':'—')+'</td><td style="font-size:11px;text-align:left">'+(d.ses||[]).map(s=>s[0]+'–'+s[1]+' '+(s[2]==='T'?'☎':'💬')).join(' · ')+'</td></tr>';}
+function renderConex(){const C=DATA[mode].conex;if(!C||!$('tbConex'))return;
+  const wks=(C.weeks||[]).filter(w=>isSel(w.label));
+  const list=C.rows.map(r=>{const days=[];wks.forEach(w=>(r.wk[w.label]||[]).forEach(d=>days.push(d)));if(!days.length)return null;
+    days.sort((a,b)=>a.k<b.k?-1:1);
+    const prog=days.filter(d=>d.tp==='T'),con=days.filter(d=>d.ini);
+    const S={name:r.name,turno:r.turno,days,nprog:prog.length,ncon:con.length,
+      falta:days.filter(d=>d.est==='falta').length,parcial:days.filter(d=>d.est==='parcial').length,
+      ntard:days.filter(d=>d.tard).length,mtard:days.reduce((a,d)=>a+(d.tard||0),0),
+      nsal:days.filter(d=>d.sal).length,msal:days.reduce((a,d)=>a+(d.sal||0),0),
+      extra:days.filter(d=>d.est==='extra').length,
+      hc:days.reduce((a,d)=>a+(d.hc||0),0),ph:prog.reduce((a,d)=>a+(d.ph||0),0),
+      cobN:prog.reduce((a,d)=>a+(d.cob||0)*(d.ph||0),0),ini:cxAvgTime(con.filter(d=>d.dw<5||true).map(d=>d.ini))};
+    S.cob=S.ph?S.cobN/S.ph:null;return S;}).filter(Boolean);
+  list.sort((a,b)=>a.name.localeCompare(b.name));
+  let h='<thead><tr><th>Agente</th><th>Turno</th><th>Días prog.</th><th>Días conect.</th><th>Faltas</th><th>Tardanzas</th><th>Salidas antes</th><th>Horas conect.</th><th>Horas prog.</th><th>Cobertura</th><th style="text-align:left">1ª conexión prom. / sesiones</th></tr></thead><tbody>';
+  const T={p:0,c:0,f:0,t:0,mt:0,s:0,ms:0,hc:0,ph:0,cn:0};
+  list.forEach(x=>{const op=conexOpen.has(x.name),tog='<span class="prodtog conextog" data-ag="'+x.name.replace(/"/g,'&quot;')+'">'+(op?'▾':'▸')+'</span>';
+    const fx=x.falta+x.parcial;
+    h+='<tr><td>'+tog+x.name+'</td><td>'+(x.turno||'—')+'</td><td>'+x.nprog+'</td><td>'+x.ncon+(x.extra?' <span class="cxl extra" title="días conectado sin turno programado">+'+x.extra+'</span>':'')+'</td><td class="'+(fx?'b':'')+'">'+(fx?(x.falta+(x.parcial?' + '+x.parcial+' parcial':'')):'0')+'</td><td class="'+(x.ntard?'a':'')+'">'+(x.ntard?x.ntard+' · '+cxMin(x.mtard):'0')+'</td><td class="'+(x.nsal?'a':'')+'">'+(x.nsal?x.nsal+' · '+cxMin(x.msal):'0')+'</td><td>'+cxH(x.hc)+'</td><td>'+(x.ph?cxH(x.ph):'—')+'</td><td class="'+(x.cob==null?'':x.cob>=0.95?'g':x.cob>=0.85?'a':'b')+'">'+(x.cob==null?'—':Math.round(x.cob*100)+'%')+'</td><td style="text-align:left">'+x.ini+'</td></tr>';
+    if(op)x.days.forEach(d=>h+=cxDayRow(d));
+    T.p+=x.nprog;T.c+=x.ncon;T.f+=x.falta+x.parcial;T.t+=x.ntard;T.mt+=x.mtard;T.s+=x.nsal;T.ms+=x.msal;T.hc+=x.hc;T.ph+=x.ph;T.cn+=x.cobN;});
+  if(list.length){const cob=T.ph?T.cn/T.ph:null;
+    h+='<tr class="tot"><td>Equipo ('+list.length+')</td><td></td><td>'+T.p+'</td><td>'+T.c+'</td><td>'+T.f+'</td><td>'+T.t+' · '+cxMin(T.mt)+'</td><td>'+T.s+' · '+cxMin(T.ms)+'</td><td>'+cxH(T.hc)+'</td><td>'+cxH(T.ph)+'</td><td class="'+(cob==null?'':cob>=0.95?'g':cob>=0.85?'a':'b')+'">'+(cob==null?'—':Math.round(cob*100)+'%')+'</td><td></td></tr>';}
+  $('tbConex').innerHTML=h+(list.length?'':'<tr><td>Sin datos de conexión para las semanas elegidas.</td></tr>')+'</tbody>';
+  // selector de semana para la grilla
+  const sel=$('conexWk'),prev=sel.value;sel.innerHTML=wks.slice().reverse().map(w=>'<option value="'+w.label+'">'+w.label+' · '+w.rng+'</option>').join('');
+  if(prev&&wks.some(w=>w.label===prev))sel.value=prev;
+  renderConexWk();}
+function renderConexWk(){const C=DATA[mode].conex,sel=$('conexWk');if(!C||!sel)return;const wl=sel.value;const w=(C.weeks||[]).find(x=>x.label===wl);
+  if(!w){$('tbConexWk').innerHTML='<tr><td>Sin semanas.</td></tr>';return;}
+  const rows=C.rows.filter(r=>r.wk[wl]&&r.wk[wl].length).sort((a,b)=>a.name.localeCompare(b.name));
+  // columnas = 7 días de la semana (desde el primer día del rango)
+  const keys=new Set();rows.forEach(r=>r.wk[wl].forEach(d=>keys.add(d.k)));
+  const ks=[...keys].sort();if(!ks.length){$('tbConexWk').innerHTML='<tr><td>Sin datos.</td></tr>';return;}
+  const first=new Date(+ks[0].slice(0,4),+ks[0].slice(4,6)-1,+ks[0].slice(6,8));const [d0,m0]=w.rng.split(' – ')[0].split('/').map(Number);
+  const start=new Date(first.getFullYear(),m0-1,d0);const cols=[];for(let i=0;i<7;i++){const t=new Date(start);t.setDate(start.getDate()+i);cols.push({k:t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0'),lab:DOWL[(t.getDay()+6)%7]+' '+String(t.getDate()).padStart(2,'0')+'/'+String(t.getMonth()+1).padStart(2,'0')});}
+  let h='<thead><tr><th>Agente</th>'+cols.map(c=>'<th>'+c.lab+'</th>').join('')+'</tr></thead><tbody>';
+  rows.forEach(r=>{const by={};r.wk[wl].forEach(d=>by[d.k]=d);
+    h+='<tr><td style="white-space:nowrap">'+r.name+'</td>'+cols.map(c=>{const d=by[c.k];if(!d)return '<td class="cxd"></td>';
+      const cc=cxCls(d.est);let sm='';
+      if(d.est==='tarde'||d.est==='tarde_sal')sm+='tarde '+cxMin(d.tard);
+      if(d.est==='sal'||d.est==='tarde_sal')sm+=(sm?' · ':'')+'sale '+cxMin(d.sal)+' antes';
+      if(d.est==='falta')sm=d.incompleto?'turno en curso':'falta';if(d.est==='parcial')sm=d.incompleto?'turno en curso':'tramo sin conexión';if(d.est==='extra')sm='día libre';
+      if(d.incompleto&&!sm)sm='turno en curso';if(d.larga)sm+=(sm?' · ':'')+'sesión >12 h';
+      if(d.est==='ds'||d.est==='vac'||d.est==='lic')return '<td class="cxd ds" title="'+(d.prog||'')+'">'+(CX_EST[d.est])+'</td>';
+      const tip=(d.prog?'Horario: '+d.prog+' · ':'')+'Sesiones: '+(d.ses||[]).map(s=>s[0]+'–'+s[1]+' '+(s[2]==='T'?'telefonía':'WhatsApp')).join(', ');
+      return '<td class="cxd '+cc+'" title="'+tip.replace(/"/g,'&quot;')+'">'+(d.ini?cxRange(d):'—')+(sm?'<small>'+sm+'</small>':'')+'</td>';}).join('')+'</tr>';});
+  $('tbConexWk').innerHTML=h+'</tbody>';}
+function setAllConex(open){const C=DATA[mode].conex;if(!C)return;if(open)(C.rows||[]).forEach(r=>conexOpen.add(r.name));else conexOpen.clear();renderConex();}
+
 /* ---- render maestro ---- */
 function render(){
   $('sub').textContent=DATA.src;
-  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();
+  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();
 }
 function setTab(t){activeTab=t;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
@@ -799,8 +881,11 @@ function setTab(t){activeTab=t;
 document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{mode=b.dataset.w;document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('active',x===b));weekSel=new Set();weeksOpen.clear();prodOpen.clear();fillWkFilter();render();});
 document.querySelectorAll('.dayexp button').forEach(b=>b.onclick=()=>setAllWeeks(b.dataset.exp==='1'));
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.wktog');if(t)toggleWeek(t.dataset.wk);});
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.prodtog');if(t){if(prodOpen.has(t.dataset.ag))prodOpen.delete(t.dataset.ag);else prodOpen.add(t.dataset.ag);renderProd();}});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.prodtog:not(.conextog)');if(t){if(prodOpen.has(t.dataset.ag))prodOpen.delete(t.dataset.ag);else prodOpen.add(t.dataset.ag);renderProd();}});
 document.querySelectorAll('.prodexp button').forEach(b=>b.onclick=()=>setAllProd(b.dataset.exp==='1'));
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.conextog');if(t){if(conexOpen.has(t.dataset.ag))conexOpen.delete(t.dataset.ag);else conexOpen.add(t.dataset.ag);renderConex();}});
+document.querySelectorAll('.conexp button').forEach(b=>b.onclick=()=>setAllConex(b.dataset.exp==='1'));
+$('conexWk').onchange=()=>renderConexWk();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.watog[data-agwa]');if(t){if(agtWaOpen.has(t.dataset.agwa))agtWaOpen.delete(t.dataset.agwa);else agtWaOpen.add(t.dataset.agwa);renderAgtWaWeekly(agtName());}});
 document.querySelectorAll('.agtwaexp button').forEach(b=>b.onclick=()=>setAllAgtWa(b.dataset.exp==='1'));
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
