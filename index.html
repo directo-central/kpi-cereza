@@ -208,6 +208,7 @@
    <button data-t="agente">Agente</button>
    <button data-t="prod">Productividad</button>
    <button data-t="conex">Conexión</button>
+   <button data-t="msj">Mensajes</button>
  </nav>
 
  <div class="tabview" data-tab="general">
@@ -315,11 +316,23 @@
      <div class="scroll"><table id="tbConexWk" style="min-width:0"></table></div>
    </div>
  </div>
+ <div class="tabview" data-tab="msj" hidden>
+   <section class="kpis" id="msjKpis"></section>
+   <div class="panel"><div class="phead" style="margin-bottom:6px"><h3>Mensajes del agente por conversación · equipo</h3></div>
+     <div class="sub2">Por semana: mensajes que envían los agentes por cada chat que atienden (línea) y % de esos mensajes enviados <b>seguidos</b>, sin respuesta del cliente en medio. Cada mensaje entregado se cobra (USD 0.033 en Perú), así que bajar estos dos números baja el costo. Respeta Canal y Semanas.</div>
+     <div class="chartbox"><canvas id="chMsj"></canvas></div>
+   </div>
+   <div class="panel"><div class="phead"><h3>Por agente</h3><div class="dayctrls"><button class="copy mini" data-copy="tbMsj">Copiar</button></div></div>
+     <div class="sub2">Cada semana: mensajes por chat y, debajo, % seguidos. Rojo = 15% o más sobre el equipo esa semana; ámbar = entre 5% y 15% sobre el equipo. <b>Nivel</b> suma las dos métricas frente al promedio del equipo (Alto = priorizar en coaching). "Un momento" = mensajes de espera; "Sin texto" = adjunto enviado sin descripción; "Inactividad" = avisos de inactividad escritos a mano. Se ocultan agentes con menos de 20 chats en las semanas elegidas. No usa el filtro de día. Fuente: chats de Cereza (notas internas excluidas).</div>
+     <div class="scroll"><table id="tbMsj"></table></div>
+     <div class="sub2" id="msjExcl" style="margin-top:8px"></div>
+   </div>
+ </div>
 
- <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 23/10/2026.</footer>
+ <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 30/10/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202610231009"></script>
-<script src="sla_data_2.js?v=202610231009"></script>
+<script src="sla_data_1.js?v=202610301546"></script>
+<script src="sla_data_2.js?v=202610301546"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -867,14 +880,45 @@ function renderConexWk(){const C=DATA[mode].conex,sel=$('conexWk');if(!C||!sel)r
 function setAllConex(open){const C=DATA[mode].conex;if(!C)return;if(open)(C.rows||[]).forEach(r=>conexOpen.add(r.name));else conexOpen.clear();renderConex();}
 
 /* ---- render maestro ---- */
+/* ---- mensajes del agente por conversación (WhatsApp) ---- */
+let chMsj=null;
+function msjKey(){return chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Total';}
+function renderMsj(){const M=DATA[mode].msj,tb=$('tbMsj');if(!tb)return;
+  if(!M||!M.rows||!M.rows.length){$('msjKpis').innerHTML='';tb.innerHTML='<tbody><tr><td>Aún no hay datos de mensajes. Se cargan con la actualización diaria.</td></tr></tbody>';return;}
+  const ck=msjKey(),wks=M.weeks.filter(w=>isSel(w.label)),Z=()=>[0,0,0,0,0,0],add=(a,c)=>{if(c)for(let i=0;i<6;i++)a[i]+=c[i];};
+  const cell=(r,w)=>(r.wk[w.label]||{})[ck];
+  const teamW=wks.map(w=>{const t=Z();M.rows.forEach(r=>add(t,cell(r,w)));return t;});
+  const T=Z();teamW.forEach(t=>add(T,t));
+  const mpc=T[0]?T[1]/T[0]:null,rb=T[1]?T[2]/T[1]:null,n=v=>v.toLocaleString('es-PE');
+  $('msjKpis').innerHTML=[['Msj. por chat',mpc==null?'-':mpc.toFixed(1),'mensajes del agente por conversación'],['Seguidos',rb==null?'-':Math.round(rb*100)+'%','enviados sin respuesta del cliente en medio'],['Mensajes de agentes',n(T[1]),n(T[0])+' chats atendidos'],['Evitables',n(T[3]+T[4]+T[5]),'espera, adjunto sin texto o inactividad manual']]
+    .map(([l,v,m])=>'<div class="kpi"><div class="lbl">'+l+'</div><div class="v">'+v+'</div><div class="meta">'+m+'</div></div>').join('');
+  if(window.Chart){if(chMsj)chMsj.destroy();
+    chMsj=new Chart($('chMsj'),{type:'line',data:{labels:wks.map(w=>w.label),datasets:[
+      {label:'Msj. por chat',data:teamW.map(t=>t[0]?+(t[1]/t[0]).toFixed(2):null),borderColor:'#2C63F0',backgroundColor:'#2C63F0',borderWidth:2.2,tension:.3,spanGaps:true,yAxisID:'y'},
+      {label:'% seguidos',data:teamW.map(t=>t[1]?+(100*t[2]/t[1]).toFixed(1):null),borderColor:'#C2870B',backgroundColor:'#C2870B',borderDash:[5,4],borderWidth:2.2,tension:.3,spanGaps:true,yAxisID:'y2'}]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},datalabels:{display:false},
+        tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+(x.parsed.y==null?'-':x.datasetIndex?x.parsed.y.toFixed(1)+'%':x.parsed.y.toFixed(1))}}},
+        scales:{y:{beginAtZero:true,grid:{color:'#EEF2F7'},title:{display:true,text:'Msj. por chat'}},y2:{position:'right',beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+'%'}},x:{grid:{display:false},ticks:{maxRotation:60,autoSkip:true,maxTicksLimit:26,font:{size:10}}}}}});}
+  const cols=wks.slice(-8),teamC=cols.map(w=>{const t=Z();M.rows.forEach(r=>add(t,cell(r,w)));return t;});
+  const all=M.rows.map(r=>{const t=Z();wks.forEach(w=>add(t,cell(r,w)));return {r,t,mpc:t[0]?t[1]/t[0]:0,rb:t[1]?t[2]/t[1]:0};});
+  const vis=all.filter(a=>a.t[0]>=20),hid=all.filter(a=>a.t[0]>0&&a.t[0]<20);
+  vis.forEach(a=>{a.sc=(mpc?a.mpc/mpc:0)+(rb?a.rb/rb:0);a.niv=a.sc>2.25?'Alto':a.sc>1.85?'Medio':'Bajo';});
+  vis.sort((x,y)=>y.sc-x.sc);
+  const wc=(c,t)=>{if(!c||!c[0])return '<td>·</td>';const m=c[1]/c[0],tm=t[0]?t[1]/t[0]:0,k=tm&&m>=tm*1.15?'b':tm&&m>=tm*1.05?'a':'';return '<td class="'+k+'" style="line-height:1.25">'+m.toFixed(1)+'<br><small style="font-weight:500;opacity:.8">'+Math.round(100*c[2]/c[1])+'%</small></td>';};
+  let h='<thead><tr><th>Agente</th>'+cols.map(w=>'<th title="'+w.rng+'">'+w.label.split(' - ').pop()+'</th>').join('')+'<th>Chats</th><th>Mensajes</th><th>Msj./chat</th><th>% seguidos</th><th>"Un momento"</th><th>Sin texto</th><th>Inactividad</th><th>Nivel</th></tr></thead><tbody>';
+  vis.forEach(a=>{h+='<tr><td>'+a.r.name+'</td>'+cols.map((w,i)=>wc(cell(a.r,w),teamC[i])).join('')+'<td>'+n(a.t[0])+'</td><td>'+n(a.t[1])+'</td><td>'+a.mpc.toFixed(1)+'</td><td>'+Math.round(a.rb*100)+'%</td><td>'+a.t[3]+'</td><td>'+a.t[4]+'</td><td>'+a.t[5]+'</td><td class="'+(a.niv==='Alto'?'b':a.niv==='Medio'?'a':'g')+'">'+(a.niv==='Alto'?'Alto · priorizar':a.niv)+'</td></tr>';});
+  h+='<tr class="tot"><td>Equipo</td>'+teamC.map(t=>t[0]?'<td style="line-height:1.25">'+(t[1]/t[0]).toFixed(1)+'<br><small style="font-weight:500;opacity:.8">'+Math.round(100*t[2]/t[1])+'%</small></td>':'<td>·</td>').join('')+'<td>'+n(T[0])+'</td><td>'+n(T[1])+'</td><td>'+(mpc==null?'-':mpc.toFixed(1))+'</td><td>'+(rb==null?'-':Math.round(rb*100)+'%')+'</td><td>'+T[3]+'</td><td>'+T[4]+'</td><td>'+T[5]+'</td><td></td></tr></tbody>';
+  tb.innerHTML=h;
+  $('msjExcl').textContent=(wks.length>8?'La tabla muestra las últimas 8 semanas elegidas; los totales usan todas. ':'')+(hid.length?'No se muestran (menos de 20 chats): '+hid.map(a=>a.r.name).join(', ')+'.':'');
+}
 function render(){
   $('sub').textContent=DATA.src;
-  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();
+  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();renderMsj();
 }
 function setTab(t){activeTab=t;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
   document.querySelectorAll('.tabview').forEach(v=>{v.hidden=v.dataset.tab!==t;});
-  if(window.Chart){[chart,chVol,chAb].forEach(c=>{try{c&&c.resize();}catch(e){}});}
+  if(window.Chart){[chart,chVol,chAb,chMsj].forEach(c=>{try{c&&c.resize();}catch(e){}});}
 }
 
 /* ---- eventos ---- */
