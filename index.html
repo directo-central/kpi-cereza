@@ -235,6 +235,12 @@
      <div class="scroll"><table class="hm" id="hmCalls"></table></div>
      <div class="hmleg" id="hmLegC"></div>
    </div>
+   <div class="panel"><div class="phead"><h3>Abandono de llamadas por hora y día</h3>
+       <span class="miniseg hmav"><button data-v="pct" class="active">% Abandono</button><button data-v="n">N° abandonadas</button><button data-v="of">N° ofrecidas</button></span></div>
+     <div class="sub2">Día × hora. % = abandonadas ÷ ofrecidas (abandono normal, no homologado) sumando las semanas seleccionadas; N° = promedio por semana. Color: verde ≤ 4% (meta), amarillo ~10%, rojo ≥ 25%. Columna Día y fila Hora = totales. "·" = sin llamadas. Respeta Canal y Semanas.</div>
+     <div class="scroll"><table class="hm" id="hmAb"></table></div>
+     <div class="hmleg" id="hmLegAb"></div>
+   </div>
  </div>
 
  <div class="tabview" data-tab="wa" hidden>
@@ -331,8 +337,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 02/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611021506"></script>
-<script src="sla_data_2.js?v=202611021506"></script>
+<script src="sla_data_1.js?v=202611021528"></script>
+<script src="sla_data_2.js?v=202611021528"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -550,7 +556,35 @@ function renderHeatInto(metric,elId,legId){
   const et=nSel===1?'1 semana':'promedio de '+nSel+' semanas';
   $(legId).innerHTML=heatLegend(hmView,et+' · '+Math.round(tvol/nSel).toLocaleString('es-PE')+(metric==='calls'?' llam/sem':' chats/sem'));
 }
-function renderHeat(){renderHeatInto('calls','hmCalls','hmLegC');renderHeatInto('wa','hmWa','hmLegW');}
+let abView='pct';
+function abColor(p){const t=p<=0.04?0:p>=0.25?1:(p-0.04)/0.21;return 'hsl('+Math.round(140-t*138)+',62%,'+(42+Math.sin(t*Math.PI)*6).toFixed(0)+'%)';}
+function renderAbHeat(){
+  const H=DATA[mode].heat;if(!H||!H.ab){$('hmAb').innerHTML='<tbody><tr><td class="rl">Sin datos.</td></tr></tbody>';$('hmLegAb').innerHTML='';return;}
+  const chK=heatKey(),selKeys=H.weeks.filter(w=>isSel(w.label)).map(w=>w.key),nSel=selKeys.length||1;
+  const chs2=chK==='Total'?['Central','Conecta Conductor']:[chK];
+  const grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
+  selKeys.forEach(k=>{const wg=H.ab[k];if(!wg)return;chs2.forEach(cc=>{const g=wg[cc];if(!g)return;
+    for(let dd=0;dd<7;dd++)for(let h=0;h<24;h++){grid[dd][h][0]+=g[dd][h][0];grid[dd][h][1]+=g[dd][h][1];}});});
+  const hrs=[];for(let h=0;h<24;h++){for(let dd=0;dd<7;dd++){if(grid[dd][h][0]>0){hrs.push(h);break;}}}
+  let mx=0;grid.forEach(rw=>rw.forEach(c=>{const v=(abView==='of'?c[0]:c[1])/nSel;if(v>mx)mx=v;}));
+  const cell=(c,lbl,bold)=>{if(!c[0])return '<td class="na">·</td>';const p=c[1]/c[0];let bg,fg,num;
+    if(abView==='pct'){bg=abColor(p);fg='#fff';num=(p*100).toFixed(0);}
+    else{const v=(abView==='of'?c[0]:c[1])/nSel,vc=volColor(mx>0?Math.min(1,v/mx):0);bg=bold?'var(--surface-2)':vc.bg;fg=bold?'var(--ink)':vc.fg;num=v>=10||Number.isInteger(v)?Math.round(v):v.toFixed(1);}
+    return '<td style="background:'+bg+';color:'+fg+(bold?';outline:1px solid var(--line)':'')+'" title="'+lbl+' · '+c[1]+' abandonadas de '+c[0]+' ofrecidas ('+(p*100).toFixed(1)+'%)">'+num+'</td>';};
+  let html='<thead><tr><th></th>'+hrs.map(h=>'<th>'+pad(h)+'</th>').join('')+'<th>Día</th></tr></thead><tbody>';
+  const tot=[0,0];
+  for(let dd=0;dd<7;dd++){const rt=[0,0];html+='<tr><td class="rl">'+DOWL[dd]+'</td>';
+    hrs.forEach(h=>{const c=grid[dd][h];rt[0]+=c[0];rt[1]+=c[1];html+=cell(c,DOWL[dd]+' '+pad(h)+':00',false);});
+    tot[0]+=rt[0];tot[1]+=rt[1];html+=cell(rt,DOWL[dd]+' (día)',true)+'</tr>';}
+  html+='<tr><td class="rl">Hora</td>';
+  hrs.forEach(h=>{const c=[0,0];for(let dd=0;dd<7;dd++){c[0]+=grid[dd][h][0];c[1]+=grid[dd][h][1];}html+=cell(c,pad(h)+':00 (todos los días)',true);});
+  html+=cell(tot,'Total',true)+'</tr>';
+  $('hmAb').innerHTML=hrs.length?html+'</tbody>':'<tbody><tr><td class="rl">Sin datos para estas semanas.</td></tr></tbody>';
+  const et=nSel===1?'1 semana':nSel+' semanas';
+  const bar=abView==='pct'?'<span>≤4%</span><span class="gr" style="background:linear-gradient(90deg,'+abColor(0)+','+abColor(.12)+','+abColor(.25)+')"></span><span>≥25%</span>':'<span>menos</span><span class="gr vol"></span><span>más</span>';
+  $('hmLegAb').innerHTML=bar+'<span class="info">'+et+' · '+tot[1].toLocaleString('es-PE')+' abandonadas de '+tot[0].toLocaleString('es-PE')+' ofrecidas ('+(tot[0]?(tot[1]/tot[0]*100).toFixed(1):'0')+'%)</span>';
+}
+function renderHeat(){renderHeatInto('calls','hmCalls','hmLegC');renderHeatInto('wa','hmWa','hmLegW');renderAbHeat();}
 
 /* ---- agentes ---- */
 function buildAgList(){
@@ -934,6 +968,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 document.querySelectorAll('.agtwaexp button').forEach(b=>b.onclick=()=>setAllAgtWa(b.dataset.exp==='1'));
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 document.querySelectorAll('.hmv button').forEach(b=>b.onclick=()=>{hmView=b.dataset.v;document.querySelectorAll('.hmv button').forEach(x=>x.classList.toggle('active',x.dataset.v===hmView));renderHeat();});
+document.querySelectorAll('.hmav button').forEach(b=>b.onclick=()=>{abView=b.dataset.v;document.querySelectorAll('.hmav button').forEach(x=>x.classList.toggle('active',x.dataset.v===abView));renderAbHeat();});
 document.querySelectorAll('.hmr button').forEach(b=>b.onclick=()=>{hmRows=b.dataset.r;document.querySelectorAll('.hmr button').forEach(x=>x.classList.toggle('active',x.dataset.r===hmRows));renderHeat();});
 document.querySelectorAll('#wkFilter .hmquick a').forEach(a=>a.onclick=()=>{setWkQuick(+a.dataset.q);fillWkFilter();render();});
 $('agtSel').onchange=()=>{agtHours=null;renderAgente();};
