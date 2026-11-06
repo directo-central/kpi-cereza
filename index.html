@@ -347,7 +347,7 @@
      <div class="sub2">Todo el año, sin importar el filtro de Semanas (sí respeta Canal). Debajo del % va la cantidad de llamadas cortas. Colores frente al equipo de ese mes (rojo &ge;3 veces, ámbar &ge;2 veces). Se ocultan agentes con menos de 100 llamadas atendidas en el año.</div>
      <div class="scroll"><table id="tbCtMes"></table></div>
    </div>
-   <div class="panel" id="ctDetPanel"><div class="phead"><h3>Detalle por agente</h3><div class="dayctrls"><select id="ctAg" style="height:36px;font-size:13px"></select><button class="copy mini" id="ctCsv" type="button">Descargar CSV</button></div></div>
+   <div class="panel" id="ctDetPanel"><div class="phead"><h3>Detalle por agente</h3><div class="dayctrls"><select id="ctAg" style="height:36px;font-size:13px"></select><button class="copy mini" id="ctCsv" type="button">Descargar Excel</button></div></div>
      <div class="sub2" id="ctAgSub"></div>
      <div class="sub2" style="margin-top:10px"><b>Día × hora</b>: cantidad de llamadas de &le;10 s en las semanas elegidas (más oscuro = más llamadas).</div>
      <div class="scroll"><table class="hm" id="hmCt"></table></div>
@@ -359,8 +359,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 06/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611060233"></script>
-<script src="sla_data_2.js?v=202611060233"></script>
+<script src="sla_data_1.js?v=202611060252"></script>
+<script src="sla_data_2.js?v=202611060252"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -1022,14 +1022,33 @@ function renderCtDet(){const name=ctAgSel,tb=$('tbCtDet');if(!tb)return;
   R.slice(0,LIM).forEach(r=>{h+='<tr><td>'+ctFecha(r[1])+'</td><td>'+r[2]+'</td><td>'+DOWL[r[3]]+'</td><td>'+cn(r[4])+'</td><td>'+r[5]+'</td><td>'+r[6]+'</td><td>'+r[8]+'</td><td class="'+(r[9]<=2?'b':'')+'">'+r[9]+' s</td><td>'+(r[10]==null?'-':r[10]+' s')+'</td><td class="'+(r[11]==='A'?'a':'')+'">'+(CT_CG[r[11]]||r[11]||'-')+'</td></tr>';});
   if(!R.length)h+='<tr><td colspan="10">Sin llamadas cortas en las semanas elegidas.</td></tr>';
   tb.innerHTML=h+'</tbody>';
-  $('ctDetNote').textContent=R.length>LIM?'Se muestran las '+LIM+' más recientes de '+ctN(R.length)+'. El CSV trae todas.':'';
+  $('ctDetNote').textContent=R.length>LIM?'Se muestran las '+LIM+' más recientes de '+ctN(R.length)+'. El Excel trae todas.':'';
 }
-function ctCsv(){const name=ctAgSel;if(!name)return;const R=ctRowsSel(name).slice().sort((a,b)=>(b[1]+b[2]).localeCompare(a[1]+a[2]));
-  const NL=String.fromCharCode(10),q=v=>'"'+String(v==null?'':v).split('"').join('""')+'"';
+function ctLoadExcel(cb){if(window.ExcelJS)return cb(true);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>cb(!!window.ExcelJS);sc.onerror=()=>cb(false);document.head.appendChild(sc);}
+function ctSortedRows(name){return ctRowsSel(name).slice().sort((a,b)=>(a[1]+a[2]).localeCompare(b[1]+b[2]));}
+function ctCsv(name,R){const NL=String.fromCharCode(10),q=v=>'"'+String(v==null?'':v).split('"').join('""')+'"';
   const lines=[['Agente','Fecha','Hora','Dia','Canal','Campaña','Anexo','Unique ID','Duracion (s)','Espera (s)','Colgo'].map(q).join(',')];
   R.forEach(r=>lines.push([name,ctFecha(r[1]),r[2],DOWF[r[3]],r[4]==='C'?'Central':'Conecta Conductor',r[5],r[6],r[8],r[9],r[10],CT_CG[r[11]]||r[11]].map(q).join(',')));
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([String.fromCharCode(65279)+lines.join(NL)],{type:'text/csv'}));
-  a.download='llamadas_cortas_'+name.split(' ').join('_')+'.csv';document.body.appendChild(a);a.click();a.remove();}
+  ctSave(new Blob([String.fromCharCode(65279)+lines.join(NL)],{type:'text/csv'}),'llamadas_cortas_'+name.split(' ').join('_')+'.csv');}
+function ctSave(blob,fn){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();}
+function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),btn=$('ctCsv'),o=btn.textContent;btn.textContent='Generando…';
+  ctLoadExcel(ok=>{btn.textContent=o;if(!ok){ctCsv(name,R);return;}
+    const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet(name.slice(0,31),{views:[{state:'frozen',ySplit:1}]});
+    const F='Arial',HD={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F3864'}},IN={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}},BD={bottom:{style:'thin',color:{argb:'FFBFBFBF'}}};
+    ws.columns=[['Fecha',11],['Hora',9],['Día',11],['Canal',16],['Campaña',12],['Anexo',15],['Unique ID',20],['Duración (s)',11],['Espera (s)',10],['Colgó',13],['Escuchada (Sí/No)',14],['Hallazgo',24],['Comentario',36]].map(([h,w])=>({header:h,width:w}));
+    const hr=ws.getRow(1);hr.height=32;hr.eachCell(c=>{c.font={name:F,bold:true,color:{argb:'FFFFFFFF'}};c.fill=HD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
+    R.forEach(r=>{const [y,m,d]=r[1].split('-').map(Number);
+      const row=ws.addRow([new Date(Date.UTC(y,m-1,d)),r[2],DOWF[r[3]],r[4]==='C'?'Central':'Conecta Conductor',r[5],r[6],String(r[8]),r[9],r[10],CT_CG[r[11]]||r[11]||'',null,null,null]);
+      row.eachCell({includeEmpty:true},(c,i)=>{c.font={name:F,size:10};c.border=BD;if(i>=11)c.fill=IN;});
+      row.getCell(1).numFmt='dd/mm/yyyy';row.getCell(7).numFmt='@';
+      row.getCell(11).dataValidation={type:'list',allowBlank:true,formulae:['"Sí,No"']};
+      row.getCell(12).dataValidation={type:'list',allowBlank:true,formulae:['"Silencio del agente,Sin audio / falla técnica,Cliente no habló,Cliente colgó / equivocado,Agente cortó al cliente,Otro"']};});
+    ws.autoFilter={from:'A1',to:'M'+Math.max(1,R.length+1)};
+    const wl=selWeekRows(),rng=wl.length?(wl[0].rng.split(' – ')[0]+' al '+wl[wl.length-1].rng.split(' – ').pop()):'';
+    const s2=wb.addWorksheet('Info');s2.getColumn(1).width=30;s2.getColumn(2).width=60;
+    [['Agente',name],['Semanas',(wl.length?wl[0].label+' a '+wl[wl.length-1].label+' ('+rng+')':'')],['Canal',chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Todos'],['Llamadas de ≤10 s',R.length],['De ≤2 s',R.filter(r=>r[9]<=2).length],['Cortó el agente',R.filter(r=>r[11]==='A').length],['Criterio','Llamada ATENDIDA con tiempo de atención de 10 s o menos (reporte de Campañas de Cereza)'],['Cómo usar','Busca cada llamada en Cereza o Speech Analytics con el Unique ID y completa las columnas amarillas.']]
+      .forEach(([k,v])=>{const rw=s2.addRow([k,v]);rw.getCell(1).font={name:F,bold:true};rw.getCell(2).font={name:F};});
+    wb.xlsx.writeBuffer().then(buf=>ctSave(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'Llamadas_cortas_'+name.split(' ').join('_')+'.xlsx'));});}
 function render(){
   $('sub').textContent=DATA.src;
   renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();renderMsj();renderCortas();
@@ -1067,7 +1086,7 @@ document.querySelectorAll('#agtHmWk .hmquick a').forEach(a=>a.onclick=()=>{agtHm
 document.querySelectorAll('#agtColaMot .hmquick a').forEach(a=>a.onclick=()=>{const r=(DATA[mode].pcola.rows||[]).find(x=>x.name===agtName());const mots=colaMotList(r);agtColaMotSel=a.dataset.m==='all'?null:new Set();fillColaMot(r);renderAgtColaBody(agtName());});
 $('chan').onchange=e=>{chanSel=e.target.value;render();};
 $('ctAg').onchange=e=>{ctAgSel=e.target.value;ctAgManual=true;renderCtDet();};
-$('ctCsv').onclick=()=>ctCsv();
+$('ctCsv').onclick=()=>ctXlsx();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('tr[data-ctag]');if(t){ctAgSel=decodeURIComponent(t.dataset.ctag);ctAgManual=true;$('ctAg').value=ctAgSel;renderCtDet();const p=$('ctDetPanel');if(p&&p.scrollIntoView)p.scrollIntoView({behavior:'smooth',block:'start'});}});
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const el=$(b.dataset.copy);if(!el)return;const t=el.innerText;if(navigator.clipboard)navigator.clipboard.writeText(t);const o=b.textContent;b.textContent='✓ Copiada';setTimeout(()=>b.textContent=o,1500);});
 fillDayFilter();fillWkFilter();fillAgt();updateScopeUI();render();setTab('general');
