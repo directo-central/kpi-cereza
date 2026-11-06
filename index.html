@@ -347,9 +347,9 @@
      <div class="sub2">Todo el año, sin importar el filtro de Semanas (sí respeta Canal). Debajo del % va la cantidad de llamadas cortas. Colores frente al equipo de ese mes (rojo &ge;3 veces, ámbar &ge;2 veces). Se ocultan agentes con menos de 100 llamadas atendidas en el año.</div>
      <div class="scroll"><table id="tbCtMes"></table></div>
    </div>
-   <div class="panel" id="ctDetPanel"><div class="phead"><h3>Detalle por agente</h3><div class="dayctrls"><select id="ctAg" style="height:36px;font-size:13px"></select><button class="copy mini" id="ctCsv" type="button">Descargar Excel</button></div></div>
+   <div class="panel" id="ctDetPanel"><div class="phead"><h3>Detalle por agente</h3><div class="dayctrls"><details class="combo" id="ctWkF"><summary id="ctWkSum">Semanas: todas</summary><div class="cpanel" style="left:auto;right:0"><div class="hmquick"><a data-cq="0">Todas</a> · <a data-cq="4">Últimas 4</a> · <a data-cq="1">Última</a></div><div class="aglist" id="ctWkList"></div></div></details><select id="ctAg" style="height:36px;font-size:13px"></select><button class="copy mini" id="ctCsv" type="button">Descargar Excel</button></div></div>
      <div class="sub2" id="ctAgSub"></div>
-     <div class="sub2" style="margin-top:10px"><b>Día × hora</b>: cantidad de llamadas de &le;10 s en las semanas elegidas (más oscuro = más llamadas).</div>
+     <div class="sub2" style="margin-top:10px"><b>Día × hora</b>: cantidad de llamadas de &le;10 s en las semanas elegidas (más oscuro = más llamadas). El filtro <b>Semanas</b> de este recuadro elige semanas dentro de las del filtro general; aplica al mapa, a la lista y al Excel.</div>
      <div class="scroll"><table class="hm" id="hmCt"></table></div>
      <div class="sub2" style="margin-top:14px"><b>Llamadas</b> (más recientes primero). Usa el Unique ID (o fecha, hora y anexo) para buscarlas en Cereza o en Speech Analytics. Por privacidad no se muestra el número del cliente: el tablero es público.</div>
      <div class="scroll" style="max-height:540px;margin-top:6px"><table id="tbCtDet"></table></div>
@@ -359,8 +359,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 06/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611060252"></script>
-<script src="sla_data_2.js?v=202611060252"></script>
+<script src="sla_data_1.js?v=202611060257"></script>
+<script src="sla_data_2.js?v=202611060257"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -968,14 +968,24 @@ function renderMsj(){const M=DATA[mode].msj,tb=$('tbMsj');if(!tb)return;
   $('msjExcl').textContent=(wks.length>8?'La tabla muestra las últimas 8 semanas elegidas; los totales usan todas. ':'')+(hid.length?'No se muestran (menos de 20 chats): '+hid.map(a=>a.r.name).join(', ')+'.':'');
 }
 /* ---- llamadas cortas ---- */
-let ctAgSel=null,ctAgManual=false;
+let ctAgSel=null,ctAgManual=false,ctWk=null;
+function ctWkAvail(){return selWeekRows().map(o=>o.label);}
+function ctWkActive(){const av=ctWkAvail();return ctWk?av.filter(l=>ctWk.has(l)):av;}
+function ctWkSumTxt(){const av=ctWkAvail(),a=ctWkActive();$('ctWkSum').textContent='Semanas: '+(!ctWk?'todas':a.length===1?'S'+a[0].split('Sem. ').pop():a.length+' de '+av.length);}
+function fillCtWk(){const av=ctWkAvail();if(ctWk){ctWk=new Set([...ctWk].filter(l=>av.includes(l)));if(!ctWk.size||ctWk.size===av.length)ctWk=null;}
+  const box=$('ctWkList');box.innerHTML='';const W=DATA[mode].weeks;
+  av.slice().reverse().forEach(l=>{const w=W.find(o=>o.label===l),lab=document.createElement('label');lab.className='agchk';const cb=document.createElement('input');cb.type='checkbox';cb.checked=!ctWk||ctWk.has(l);
+    cb.onchange=()=>{if(!ctWk)ctWk=new Set(av);if(cb.checked)ctWk.add(l);else ctWk.delete(l);if(!ctWk.size||ctWk.size===av.length)ctWk=null;fillCtWk();renderCtDet();};
+    lab.appendChild(cb);lab.appendChild(document.createTextNode(' '+l+(w?' ('+w.rng+')':'')));box.appendChild(lab);});
+  ctWkSumTxt();}
+function ctWkQuick(n){const av=ctWkAvail();ctWk=n===0?null:new Set(av.slice(-n));fillCtWk();renderCtDet();}
 const CT_CG={A:'Agente',C:'Cliente',T:'Transferencia'};
 function ctSum(o){const t=[0,0,0,0];if(!o)return t;selChans().forEach(c=>{const p=o[c];if(p)for(let i=0;i<4;i++)t[i]+=p[i];});return t;}
 function ctCls(p,team){if(p==null||!team)return '';return p>=team*3?'b':p>=team*2?'a':'';}
 const ctPct=(a,b)=>b?(100*a/b).toFixed(1)+'%':'-';
 const ctN=v=>v.toLocaleString('es-PE');
 const ctFecha=f=>f.slice(8,10)+'/'+f.slice(5,7)+'/'+f.slice(0,4);
-function ctRowsSel(name){const C=DATA.cortas,wl=new Set(selWeekRows().map(o=>o.label)),wi=mode==='fri'?13:12,cs=new Set(selChans());
+function ctRowsSel(name){const C=DATA.cortas,wl=new Set(name?ctWkActive():selWeekRows().map(o=>o.label)),wi=mode==='fri'?13:12,cs=new Set(selChans());
   return C.rows.filter(r=>wl.has(r[wi])&&cs.has(r[4])&&(!name||C.names[r[0]]===name));}
 function renderCortas(){const C=DATA.cortas,tb=$('tbCt');if(!tb)return;
   if(!C||!C.rows){tb.innerHTML='<tbody><tr><td>Sin datos de llamadas cortas.</td></tr></tbody>';return;}
@@ -1005,7 +1015,7 @@ function renderCortas(){const C=DATA.cortas,tb=$('tbCt');if(!tb)return;
   const opts=[...vis.map(a=>a.n),...C.names.filter(n=>!vis.some(a=>a.n===n)).sort()];
   if(!ctAgManual||!ctAgSel||!opts.includes(ctAgSel))ctAgSel=opts[0]||null;
   $('ctAg').innerHTML=opts.map(n=>'<option'+(n===ctAgSel?' selected':'')+'>'+n+'</option>').join('');
-  renderCtDet();
+  fillCtWk();renderCtDet();
 }
 function renderCtDet(){const name=ctAgSel,tb=$('tbCtDet');if(!tb)return;
   if(!name){tb.innerHTML='';$('hmCt').innerHTML='';$('ctAgSub').textContent='';return;}
@@ -1044,7 +1054,7 @@ function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),
       row.getCell(11).dataValidation={type:'list',allowBlank:true,formulae:['"Sí,No"']};
       row.getCell(12).dataValidation={type:'list',allowBlank:true,formulae:['"Silencio del agente,Sin audio / falla técnica,Cliente no habló,Cliente colgó / equivocado,Agente cortó al cliente,Otro"']};});
     ws.autoFilter={from:'A1',to:'M'+Math.max(1,R.length+1)};
-    const wl=selWeekRows(),rng=wl.length?(wl[0].rng.split(' – ')[0]+' al '+wl[wl.length-1].rng.split(' – ').pop()):'';
+    const act=ctWkActive(),wl=DATA[mode].weeks.filter(o=>act.includes(o.label)),rng=wl.length?(wl[0].rng.split(' – ')[0]+' al '+wl[wl.length-1].rng.split(' – ').pop()):'';
     const s2=wb.addWorksheet('Info');s2.getColumn(1).width=30;s2.getColumn(2).width=60;
     [['Agente',name],['Semanas',(wl.length?wl[0].label+' a '+wl[wl.length-1].label+' ('+rng+')':'')],['Canal',chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Todos'],['Llamadas de ≤10 s',R.length],['De ≤2 s',R.filter(r=>r[9]<=2).length],['Cortó el agente',R.filter(r=>r[11]==='A').length],['Criterio','Llamada ATENDIDA con tiempo de atención de 10 s o menos (reporte de Campañas de Cereza)'],['Cómo usar','Busca cada llamada en Cereza o Speech Analytics con el Unique ID y completa las columnas amarillas.']]
       .forEach(([k,v])=>{const rw=s2.addRow([k,v]);rw.getCell(1).font={name:F,bold:true};rw.getCell(2).font={name:F};});
@@ -1087,6 +1097,7 @@ document.querySelectorAll('#agtColaMot .hmquick a').forEach(a=>a.onclick=()=>{co
 $('chan').onchange=e=>{chanSel=e.target.value;render();};
 $('ctAg').onchange=e=>{ctAgSel=e.target.value;ctAgManual=true;renderCtDet();};
 $('ctCsv').onclick=()=>ctXlsx();
+document.querySelectorAll('#ctWkF .hmquick a').forEach(a=>a.onclick=()=>ctWkQuick(+a.dataset.cq));
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('tr[data-ctag]');if(t){ctAgSel=decodeURIComponent(t.dataset.ctag);ctAgManual=true;$('ctAg').value=ctAgSel;renderCtDet();const p=$('ctDetPanel');if(p&&p.scrollIntoView)p.scrollIntoView({behavior:'smooth',block:'start'});}});
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const el=$(b.dataset.copy);if(!el)return;const t=el.innerText;if(navigator.clipboard)navigator.clipboard.writeText(t);const o=b.textContent;b.textContent='✓ Copiada';setTimeout(()=>b.textContent=o,1500);});
 fillDayFilter();fillWkFilter();fillAgt();updateScopeUI();render();setTab('general');
