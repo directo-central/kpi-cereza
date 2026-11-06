@@ -209,6 +209,7 @@
    <button data-t="prod">Productividad</button>
    <button data-t="conex">Conexión</button>
    <button data-t="msj">Mensajes</button>
+   <button data-t="cortas">Llamadas cortas</button>
  </nav>
 
  <div class="tabview" data-tab="general">
@@ -335,10 +336,31 @@
    </div>
  </div>
 
+ <div class="tabview" data-tab="cortas" hidden>
+   <section class="kpis" id="ctKpis"></section>
+   <div class="panel"><div class="phead"><h3>Llamadas cortas por agente · semanas elegidas</h3><div class="dayctrls"><button class="copy mini" data-copy="tbCt">Copiar</button></div></div>
+     <div class="sub2">Llamadas <b>atendidas</b> con tiempo de atención de <b>10 s o menos</b>: en ese tiempo no alcanza ni el saludo. <b>&le;2 s</b> = contestó y cortó casi al instante. <b>Cortó el agente</b> = columna "Colgado" del reporte de Cereza. Rojo = 3 veces o más el % del equipo; ámbar = 2 veces o más. Respeta Canal y Semanas. Se ocultan agentes con menos de 50 llamadas atendidas. Toca un agente para ver su detalle abajo.</div>
+     <div class="scroll"><table id="tbCt"></table></div>
+     <div class="sub2" id="ctExcl" style="margin-top:8px"></div>
+   </div>
+   <div class="panel"><div class="phead"><h3>Mes a mes · % de llamadas de &le;10 s</h3><div class="dayctrls"><button class="copy mini" data-copy="tbCtMes">Copiar</button></div></div>
+     <div class="sub2">Todo el año, sin importar el filtro de Semanas (sí respeta Canal). Debajo del % va la cantidad de llamadas cortas. Colores frente al equipo de ese mes (rojo &ge;3 veces, ámbar &ge;2 veces). Se ocultan agentes con menos de 100 llamadas atendidas en el año.</div>
+     <div class="scroll"><table id="tbCtMes"></table></div>
+   </div>
+   <div class="panel" id="ctDetPanel"><div class="phead"><h3>Detalle por agente</h3><div class="dayctrls"><select id="ctAg" style="height:36px;font-size:13px"></select><button class="copy mini" id="ctCsv" type="button">Descargar CSV</button></div></div>
+     <div class="sub2" id="ctAgSub"></div>
+     <div class="sub2" style="margin-top:10px"><b>Día × hora</b>: cantidad de llamadas de &le;10 s en las semanas elegidas (más oscuro = más llamadas).</div>
+     <div class="scroll"><table class="hm" id="hmCt"></table></div>
+     <div class="sub2" style="margin-top:14px"><b>Llamadas</b> (más recientes primero). Usa el Unique ID (o fecha, hora y anexo) para buscarlas en Cereza o en Speech Analytics. Por privacidad no se muestra el número del cliente: el tablero es público.</div>
+     <div class="scroll" style="max-height:540px;margin-top:6px"><table id="tbCtDet"></table></div>
+     <div class="sub2" id="ctDetNote" style="margin-top:6px"></div>
+   </div>
+ </div>
+
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 06/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611060050"></script>
-<script src="sla_data_2.js?v=202611060050"></script>
+<script src="sla_data_1.js?v=202611060233"></script>
+<script src="sla_data_2.js?v=202611060233"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -945,9 +967,72 @@ function renderMsj(){const M=DATA[mode].msj,tb=$('tbMsj');if(!tb)return;
   tb.innerHTML=h;
   $('msjExcl').textContent=(wks.length>8?'La tabla muestra las últimas 8 semanas elegidas; los totales usan todas. ':'')+(hid.length?'No se muestran (menos de 20 chats): '+hid.map(a=>a.r.name).join(', ')+'.':'');
 }
+/* ---- llamadas cortas ---- */
+let ctAgSel=null,ctAgManual=false;
+const CT_CG={A:'Agente',C:'Cliente',T:'Transferencia'};
+function ctSum(o){const t=[0,0,0,0];if(!o)return t;selChans().forEach(c=>{const p=o[c];if(p)for(let i=0;i<4;i++)t[i]+=p[i];});return t;}
+function ctCls(p,team){if(p==null||!team)return '';return p>=team*3?'b':p>=team*2?'a':'';}
+const ctPct=(a,b)=>b?(100*a/b).toFixed(1)+'%':'-';
+const ctN=v=>v.toLocaleString('es-PE');
+const ctFecha=f=>f.slice(8,10)+'/'+f.slice(5,7)+'/'+f.slice(0,4);
+function ctRowsSel(name){const C=DATA.cortas,wl=new Set(selWeekRows().map(o=>o.label)),wi=mode==='fri'?13:12,cs=new Set(selChans());
+  return C.rows.filter(r=>wl.has(r[wi])&&cs.has(r[4])&&(!name||C.names[r[0]]===name));}
+function renderCortas(){const C=DATA.cortas,tb=$('tbCt');if(!tb)return;
+  if(!C||!C.rows){tb.innerHTML='<tbody><tr><td>Sin datos de llamadas cortas.</td></tr></tbody>';return;}
+  const W=C.wk[mode]||{},wl=selWeekRows().map(o=>o.label);
+  const ags=Object.keys(W).map(n=>{const t=[0,0,0,0];wl.forEach(l=>{const s=ctSum(W[n][l]);for(let i=0;i<4;i++)t[i]+=s[i];});return{n,t,p:t[0]?t[1]/t[0]:0};}).filter(a=>a.t[0]>0);
+  const T=[0,0,0,0];ags.forEach(a=>{for(let i=0;i<4;i++)T[i]+=a.t[i];});const tp=T[0]?T[1]/T[0]:null;
+  const vis=ags.filter(a=>a.t[0]>=50).sort((x,y)=>y.p-x.p),hid=ags.filter(a=>a.t[0]<50&&a.t[1]>0);
+  const top=vis[0];
+  $('ctKpis').innerHTML=[['% equipo &le;10 s',tp==null?'-':(tp*100).toFixed(1)+'%',ctN(T[1])+' de '+ctN(T[0])+' atendidas'],['&le;2 s',ctPct(T[2],T[1]),'de las llamadas cortas ('+ctN(T[2])+')'],['Cortó el agente',ctPct(T[3],T[1]),'de las llamadas cortas ('+ctN(T[3])+')'],['Mayor %',top?(top.p*100).toFixed(1)+'%':'-',top?top.n+' · '+(tp?(top.p/tp).toFixed(1)+'x el equipo':''):'']]
+    .map(([l,v,m],i)=>'<div class="kpi"'+(i===3&&top&&ctCls(top.p,tp)==='b'?' style="--rail:var(--bad)"':'')+'><div class="lbl">'+l+'</div><div class="v'+(i===3&&top&&ctCls(top.p,tp)==='b'?' b':'')+'">'+v+'</div><div class="meta">'+m+'</div></div>').join('');
+  let h='<thead><tr><th>Agente</th><th>Atendidas</th><th>&le;10 s</th><th>% &le;10 s</th><th>vs equipo</th><th>&le;2 s</th><th>% cortó el agente</th></tr></thead><tbody>';
+  vis.forEach(a=>{const k=ctCls(a.p,tp);h+='<tr data-ctag="'+encodeURIComponent(a.n)+'" style="cursor:pointer"><td>'+a.n+'</td><td>'+ctN(a.t[0])+'</td><td>'+ctN(a.t[1])+'</td><td class="'+k+'">'+(a.p*100).toFixed(1)+'%</td><td class="'+k+'">'+(tp?(a.p/tp).toFixed(1)+'x':'-')+'</td><td>'+ctN(a.t[2])+'</td><td>'+ctPct(a.t[3],a.t[1])+'</td></tr>';});
+  h+='<tr class="tot"><td>Equipo</td><td>'+ctN(T[0])+'</td><td>'+ctN(T[1])+'</td><td>'+(tp==null?'-':(tp*100).toFixed(1)+'%')+'</td><td>1.0x</td><td>'+ctN(T[2])+'</td><td>'+ctPct(T[3],T[1])+'</td></tr></tbody>';
+  tb.innerHTML=h;
+  $('ctExcl').textContent=hid.length?'No se muestran (menos de 50 atendidas): '+hid.map(a=>a.n+' ('+a.t[1]+' cortas de '+a.t[0]+')').join(', ')+'.':'';
+  /* mes a mes */
+  const MS=C.months,MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const am=Object.keys(C.mon).map(n=>{const ms=MS.map(m=>ctSum(C.mon[n][m]));const y=[0,0,0,0];ms.forEach(t=>{for(let i=0;i<4;i++)y[i]+=t[i];});return{n,ms,y,p:y[0]?y[1]/y[0]:0};}).filter(a=>a.y[0]>=100).sort((x,y)=>y.p-x.p);
+  const tm=MS.map((m,j)=>{let a=0,b=0;Object.keys(C.mon).forEach(n=>{const t=ctSum(C.mon[n][m]);a+=t[0];b+=t[1];});return [a,b];});
+  const ty=tm.reduce((s,t)=>[s[0]+t[0],s[1]+t[1]],[0,0]);
+  const mc=(t,team)=>{if(!t[0])return '<td>·</td>';const p=t[1]/t[0],tp2=team[0]?team[1]/team[0]:0;return '<td class="'+ctCls(p,tp2)+'" style="line-height:1.25">'+(p*100).toFixed(1)+'%<br><small style="font-weight:500;opacity:.8">'+t[1]+'</small></td>';};
+  let hm='<thead><tr><th>Agente</th>'+MS.map(m=>'<th>'+MN[+m.slice(5)-1]+' '+m.slice(2,4)+'</th>').join('')+'<th>Año</th></tr></thead><tbody>';
+  am.forEach(a=>{hm+='<tr data-ctag="'+encodeURIComponent(a.n)+'" style="cursor:pointer"><td>'+a.n+'</td>'+a.ms.map((t,j)=>mc(t,tm[j])).join('')+mc(a.y,ty)+'</tr>';});
+  hm+='<tr class="tot"><td>Equipo</td>'+tm.map(t=>t[0]?'<td style="line-height:1.25">'+(100*t[1]/t[0]).toFixed(1)+'%<br><small style="font-weight:500;opacity:.8">'+t[1]+'</small></td>':'<td>·</td>').join('')+'<td>'+(ty[0]?(100*ty[1]/ty[0]).toFixed(1)+'%':'-')+'</td></tr></tbody>';
+  $('tbCtMes').innerHTML=hm;
+  /* selector de agente */
+  const opts=[...vis.map(a=>a.n),...C.names.filter(n=>!vis.some(a=>a.n===n)).sort()];
+  if(!ctAgManual||!ctAgSel||!opts.includes(ctAgSel))ctAgSel=opts[0]||null;
+  $('ctAg').innerHTML=opts.map(n=>'<option'+(n===ctAgSel?' selected':'')+'>'+n+'</option>').join('');
+  renderCtDet();
+}
+function renderCtDet(){const name=ctAgSel,tb=$('tbCtDet');if(!tb)return;
+  if(!name){tb.innerHTML='';$('hmCt').innerHTML='';$('ctAgSub').textContent='';return;}
+  const R=ctRowsSel(name).slice().sort((a,b)=>(b[1]+b[2]).localeCompare(a[1]+a[2]));
+  const n2=R.filter(r=>r[9]<=2).length,na=R.filter(r=>r[11]==='A').length;
+  $('ctAgSub').innerHTML='<b>'+name+'</b> · '+ctN(R.length)+' llamadas de &le;10 s en las semanas elegidas · '+ctN(n2)+' de &le;2 s · '+ctN(na)+' las cortó el agente.';
+  const G=[...Array(7)].map(()=>Array(24).fill(0));R.forEach(r=>{G[r[3]][parseInt(r[2],10)]++;});
+  const mx=Math.max(1,...G.flat());
+  let hh='<thead><tr><th></th>'+[...Array(24).keys()].map(x=>'<th>'+pad(x)+'</th>').join('')+'<th>Total</th></tr></thead><tbody>';
+  dayOrder().forEach(dw=>{const row=G[dw],s=row.reduce((a,b)=>a+b,0);hh+='<tr><td class="rl">'+DOWL[dw]+'</td>'+row.map(v=>v?'<td style="background:rgba(214,69,65,'+(0.18+0.82*v/mx).toFixed(2)+')" title="'+v+' llamadas">'+v+'</td>':'<td class="na">·</td>').join('')+'<td class="rl">'+s+'</td></tr>';});
+  hh+='</tbody>';$('hmCt').innerHTML=hh;
+  const LIM=1000,cn=c=>c==='C'?'Central':'C. Conductor';
+  let h='<thead><tr><th>Fecha</th><th>Hora</th><th>Día</th><th>Canal</th><th>Campaña</th><th>Anexo</th><th>Unique ID</th><th>Duración</th><th>Espera</th><th>Colgó</th></tr></thead><tbody>';
+  R.slice(0,LIM).forEach(r=>{h+='<tr><td>'+ctFecha(r[1])+'</td><td>'+r[2]+'</td><td>'+DOWL[r[3]]+'</td><td>'+cn(r[4])+'</td><td>'+r[5]+'</td><td>'+r[6]+'</td><td>'+r[8]+'</td><td class="'+(r[9]<=2?'b':'')+'">'+r[9]+' s</td><td>'+(r[10]==null?'-':r[10]+' s')+'</td><td class="'+(r[11]==='A'?'a':'')+'">'+(CT_CG[r[11]]||r[11]||'-')+'</td></tr>';});
+  if(!R.length)h+='<tr><td colspan="10">Sin llamadas cortas en las semanas elegidas.</td></tr>';
+  tb.innerHTML=h+'</tbody>';
+  $('ctDetNote').textContent=R.length>LIM?'Se muestran las '+LIM+' más recientes de '+ctN(R.length)+'. El CSV trae todas.':'';
+}
+function ctCsv(){const name=ctAgSel;if(!name)return;const R=ctRowsSel(name).slice().sort((a,b)=>(b[1]+b[2]).localeCompare(a[1]+a[2]));
+  const NL=String.fromCharCode(10),q=v=>'"'+String(v==null?'':v).split('"').join('""')+'"';
+  const lines=[['Agente','Fecha','Hora','Dia','Canal','Campaña','Anexo','Unique ID','Duracion (s)','Espera (s)','Colgo'].map(q).join(',')];
+  R.forEach(r=>lines.push([name,ctFecha(r[1]),r[2],DOWF[r[3]],r[4]==='C'?'Central':'Conecta Conductor',r[5],r[6],r[8],r[9],r[10],CT_CG[r[11]]||r[11]].map(q).join(',')));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([String.fromCharCode(65279)+lines.join(NL)],{type:'text/csv'}));
+  a.download='llamadas_cortas_'+name.split(' ').join('_')+'.csv';document.body.appendChild(a);a.click();a.remove();}
 function render(){
   $('sub').textContent=DATA.src;
-  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();renderMsj();
+  renderKPIs();renderSla();renderVol();renderCalls();renderAb();renderWa();renderHeat();renderAgente();renderProd();renderConex();renderMsj();renderCortas();
 }
 function setTab(t){activeTab=t;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
@@ -981,6 +1066,9 @@ document.querySelectorAll('#agtChatExp button').forEach(b=>b.onclick=()=>{docume
 document.querySelectorAll('#agtHmWk .hmquick a').forEach(a=>a.onclick=()=>{agtHmWeeks=null;fillAgtHmWeeks(agtName());renderAgtHeat(agtName());});
 document.querySelectorAll('#agtColaMot .hmquick a').forEach(a=>a.onclick=()=>{const r=(DATA[mode].pcola.rows||[]).find(x=>x.name===agtName());const mots=colaMotList(r);agtColaMotSel=a.dataset.m==='all'?null:new Set();fillColaMot(r);renderAgtColaBody(agtName());});
 $('chan').onchange=e=>{chanSel=e.target.value;render();};
+$('ctAg').onchange=e=>{ctAgSel=e.target.value;ctAgManual=true;renderCtDet();};
+$('ctCsv').onclick=()=>ctCsv();
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('tr[data-ctag]');if(t){ctAgSel=decodeURIComponent(t.dataset.ctag);ctAgManual=true;$('ctAg').value=ctAgSel;renderCtDet();const p=$('ctDetPanel');if(p&&p.scrollIntoView)p.scrollIntoView({behavior:'smooth',block:'start'});}});
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const el=$(b.dataset.copy);if(!el)return;const t=el.innerText;if(navigator.clipboard)navigator.clipboard.writeText(t);const o=b.textContent;b.textContent='✓ Copiada';setTimeout(()=>b.textContent=o,1500);});
 fillDayFilter();fillWkFilter();fillAgt();updateScopeUI();render();setTab('general');
 </script></body></html>
