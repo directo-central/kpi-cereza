@@ -374,8 +374,8 @@
  </div>
 
  <div class="tabview" data-tab="horario" hidden>
-   <div class="panel"><div class="phead"><h3>Horario del equipo</h3><div class="dayctrls"><select id="hzMes" style="height:36px;font-size:13px"></select><button class="copy mini" id="hzAddBtn" type="button">+ Agregar agente</button><button class="copy mini" id="hzDl" type="button">Descargar Excel</button><button class="copy mini" id="hzReset" type="button">Descartar cambios</button></div></div>
-     <div class="sub2">Toca una celda para cambiar el horario, la <b>modalidad</b> (presencial, remoto, evento) o marcar <b>descanso, vacaciones, permiso, licencia o falta</b>. Puedes aplicar el cambio a un rango de días. Los cambios se guardan <b>sólo en este navegador</b> hasta que descargues el Excel: guárdalo en la carpeta <b>SLA_auto</b> (su nombre empieza con "Horario") y desde la siguiente actualización el tablero lo usa (pestaña Conexión). Base actual: <span id="hzSrc"></span>.</div>
+   <div class="panel"><div class="phead"><h3>Horario del equipo</h3><div class="dayctrls"><select id="hzMes" style="height:36px;font-size:13px"></select><select id="hzWk" style="height:36px;font-size:13px"></select><button class="copy mini" id="hzAddBtn" type="button">+ Agregar agente</button><button class="copy mini" id="hzDl" type="button">Descargar Excel</button><button class="copy mini" id="hzReset" type="button">Descartar cambios</button></div></div>
+     <div class="sub2">Toca una celda para cambiar el horario, la <b>modalidad</b> (presencial, remoto, evento) o marcar <b>descanso, vacaciones, permiso, licencia o falta</b>. Puedes aplicar el cambio a un rango de días. Usa <b>Semana</b> para ver sólo una semana (respeta Lun–Dom / Vie–Jue; si la semana cruza de mes, aquí se ven sólo los días de este mes). Los cambios se guardan <b>sólo en este navegador</b> hasta que descargues el Excel: guárdalo en la carpeta <b>SLA_auto</b> (su nombre empieza con "Horario") y desde la siguiente actualización el tablero lo usa (pestaña Conexión). Base actual: <span id="hzSrc"></span>.</div>
      <div id="hzBar" class="sub2" style="margin-top:8px;font-weight:600"></div>
      <div id="hzAdd" class="hzbox" hidden>
        <div class="hzrow"><label>Nombre<input id="hzAName" placeholder="Nombre Apellido"></label><label>Turno<input id="hzATurno" list="hzTurnos" placeholder="Mañana"></label><label>Horario<input id="hzAHor" list="hzShifts" placeholder="06:00-14:00"></label>
@@ -400,8 +400,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 06/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611060319"></script>
-<script src="sla_data_2.js?v=202611060319"></script>
+<script src="sla_data_1.js?v=202611060340"></script>
+<script src="sla_data_2.js?v=202611060340"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -1103,6 +1103,10 @@ function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),
 /* ---- horario (editor) ---- */
 const HZ_KEY='slaHorarioWeb_v1',HZ_COL={H:'#FFFFFF',R:'#DDEBF7',E:'#E4D7F5',DS:'#F8D7DA',VAC:'#E2EFDA',PER:'#FCE4D6',LIC:'#FFF2CC',FAL:'#F4B6B6',NI:'#EDEDED'};
 const HZ_TXT={DS:'DS',VAC:'VAC',PER:'PERMISO',LIC:'LICENCIA',FAL:'FALTA',NI:'—'};
+let hzWk='all';
+function hzIsoWk(dt){const t=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));const dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);const f=new Date(Date.UTC(t.getUTCFullYear(),0,4));return 1+Math.round(((t-f)/864e5-3+((f.getUTCDay()+6)%7))/7);}
+function hzWeeks(m){const W=[],idx={};for(let d=0;d<m.nd;d++){const dt=new Date(m.y,m.m-1,d+1),js=(dt.getDay()+6)%7,off=mode==='fri'?(js-4+7)%7:js,st=new Date(m.y,m.m-1,d+1-off),en=new Date(st.getFullYear(),st.getMonth(),st.getDate()+6),k=st.getFullYear()*10000+(st.getMonth()+1)*100+st.getDate();
+  if(!(k in idx)){const ref=mode==='fri'?new Date(st.getFullYear(),st.getMonth(),st.getDate()+3):st;idx[k]=W.length;W.push({k:String(k),label:'Sem. '+pad(hzIsoWk(ref))+' · '+pad(st.getDate())+'/'+pad(st.getMonth()+1)+' – '+pad(en.getDate())+'/'+pad(en.getMonth()+1),days:[]});}W[idx[k]].days.push(d);}return W;}
 let hz=null,hzBaseVer='',hzMi=(()=>{try{const B=DATA.horario||{months:[]},n=new Date(),k=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0'),i=B.months.findIndex(m=>m.k===k);return i>=0?i:Math.max(0,B.months.length-1);}catch(e){return 0;}})(),hzSel=null,hzResetArm=false;
 function hzBase(){return JSON.parse(JSON.stringify(DATA.horario||{months:[]}));}
 function hzSt(v){const s=String(v||'').trim().toLowerCase();if(!s||s==='—'||s==='-'||s==='–'||s.indexOf('a')===0&&s.indexOf('n no')>0)return 'NI';if(s==='ds'||s==='descanso')return 'DS';if(s.indexOf('vac')===0)return 'VAC';if(s.indexOf('perm')===0)return 'PER';if(s.indexOf('lic')===0||s.indexOf('medic')>=0)return 'LIC';if(s.indexOf('falta')===0)return 'FAL';return 'H';}
@@ -1122,12 +1126,14 @@ function renderHorario(){const tb=$('tbHz');if(!tb)return;if(!hz)hzLoad();
   if(hzMi>=hz.months.length)hzMi=hz.months.length-1;
   $('hzMes').innerHTML=hz.months.map((m,i)=>'<option value="'+i+'"'+(i===hzMi?' selected':'')+'>'+m.label+'</option>').join('');
   $('hzSrc').textContent=(DATA.horario||{}).src||'-';
-  const m=hz.months[hzMi],L='DLMMJVS';
+  const m=hz.months[hzMi],L='DLMMJVS',WK=hzWeeks(m);if(hzWk!=='all'&&!WK.some(w=>w.k===hzWk))hzWk='all';
+  $('hzWk').innerHTML='<option value="all">Semana: todo el mes</option>'+WK.map(w=>'<option value="'+w.k+'"'+(w.k===hzWk?' selected':'')+'>'+w.label+(w.days.length<7?' (parcial)':'')+'</option>').join('');
+  const DD=hzWk==='all'?[...Array(m.nd).keys()]:WK.find(w=>w.k===hzWk).days;
   let h='<thead><tr><th style="left:0;z-index:3">Colaborador</th><th>Turno</th>';
-  for(let d=0;d<m.nd;d++)h+='<th class="'+(m.fer.includes(d+1)?'fer':'')+'">'+L[hzDow(m,d)]+'<br>'+pad(d+1)+'</th>';
+  for(const d of DD)h+='<th class="'+(m.fer.includes(d+1)?'fer':'')+'">'+L[hzDow(m,d)]+'<br>'+pad(d+1)+'</th>';
   h+='</tr></thead><tbody>';
   m.rows.forEach((r,ri)=>{h+='<tr><td class="hzn">'+r.n+'</td><td class="hzt">'+(r.t||'')+'</td>';
-    for(let d=0;d<m.nd;d++){const v=r.v[d],c=[hzChanged(m,r,d)?'chg':'',hzSel&&hzSel.ri===ri&&hzSel.d===d?'sel':''].join(' ');
+    for(const d of DD){const v=r.v[d],c=[hzChanged(m,r,d)?'chg':'',hzSel&&hzSel.ri===ri&&hzSel.d===d?'sel':''].join(' ');
       h+='<td class="'+c+'" data-hr="'+ri+'" data-hd="'+d+'" style="background:'+hzColor(v,r.md[d])+'" title="'+r.n+' · '+pad(d+1)+'/'+pad(m.m)+'">'+(v||'·')+'</td>';}
     h+='</tr>';});
   tb.innerHTML=h+'</tbody>';hzLists();hzBar();}
@@ -1212,7 +1218,8 @@ document.querySelectorAll('#agtColaMot .hmquick a').forEach(a=>a.onclick=()=>{co
 $('chan').onchange=e=>{chanSel=e.target.value;render();};
 $('ctAg').onchange=e=>{ctAgSel=e.target.value;ctAgManual=true;renderCtDet();};
 $('ctCsv').onclick=()=>ctXlsx();
-$('hzMes').onchange=e=>{hzMi=+e.target.value;hzSel=null;$('hzEd').hidden=true;renderHorario();};
+$('hzMes').onchange=e=>{hzMi=+e.target.value;hzWk='all';hzSel=null;$('hzEd').hidden=true;renderHorario();};
+$('hzWk').onchange=e=>{hzWk=e.target.value;renderHorario();};
 $('tbHz').addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('td[data-hr]');if(t)hzOpen(+t.dataset.hr,+t.dataset.hd);});
 $('hzEst').onchange=hzEstUI;$('hzApply').onclick=hzApply;$('hzClose').onclick=()=>{hzSel=null;$('hzEd').hidden=true;renderHorario();};$('hzDelRow').onclick=hzDelRow;
 $('hzAddBtn').onclick=hzAddUI;$('hzAOk').onclick=hzAddOk;$('hzACancel').onclick=()=>{$('hzAdd').hidden=true;};$('hzReset').onclick=hzReset;$('hzDl').onclick=hzDownload;
