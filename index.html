@@ -216,7 +216,7 @@
    <div class="ctrls">
      <span class="seg" id="seg"><button data-w="mon" class="active">Lun–Dom</button><button data-w="fri">Vie–Jue</button></span>
      <div class="fld"><span>Canal</span>
-       <select id="chan"><option value="todos">Todos</option><option value="C">Central</option><option value="CC">Conecta 1ª línea</option><option value="2L">Conecta 2ª línea</option></select></div>
+       <select id="chan"><option value="todos">Todos</option><option value="C">Central</option><option value="CT">Conecta Conductor</option><option value="CC">&nbsp;&nbsp;↳ Conecta 1ª línea · Customer Care</option><option value="2L">&nbsp;&nbsp;↳ Conecta 2ª línea</option></select></div>
      <details id="wkFilter"><summary id="wkSummary">Semanas: todas ▾</summary>
        <div class="hmquick"><a data-q="0">Todas</a> · <a data-q="4">Últimas 4</a> · <a data-q="8">Últimas 8</a></div>
        <div class="aglist" id="wkList"></div>
@@ -414,8 +414,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 12/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611121649"></script>
-<script src="sla_data_2.js?v=202611121649"></script>
+<script src="sla_data_1.js?v=202611121915"></script>
+<script src="sla_data_2.js?v=202611121915"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -429,9 +429,9 @@ const cls=v=>v==null?'':(v>=.8?'g':v>=.7?'a':'b');
 const sla=p=>(p&&p[0])?p[1]/p[0]:null;
 const abHom=(off,aband,hom)=>{const base=off-(aband-hom);return base>0?hom/base:null;};
 const abCls=v=>v==null?'':v>0.08?'b':v>0.05?'a':'';
-const CH={C:{name:'Central',color:'#2C63F0'},CC:{name:'Conecta 1ª línea',color:'#0FA8A0'},'2L':{name:'Conecta 2ª línea',color:'#8B5CF6'},OT:{name:'Otros (fuera de Customer Care)',color:'#9AA6B6'}};
-const FK={C:{a:'ac',rc:'rcc',rw:'rwc',t:'tc'},CC:{a:'ak',rc:'rck',rw:'rwk',t:'tk'},'2L':{a:'a2',rc:'rc2',rw:'rw2',t:'t2'},OT:{a:'ao',rc:'rco',rw:'rwo',t:'to'}};
-const CHKEY={C:'Central',CC:'Conecta Conductor','2L':'Conecta 2L',OT:'Otros'};
+const CH={C:{name:'Central',color:'#2C63F0'},CT:{name:'Conecta Conductor',color:'#0FA8A0'},CC:{name:'Conecta 1ª línea',color:'#0B7C76'},'2L':{name:'Conecta 2ª línea',color:'#8B5CF6'},OT:{name:'Otros (fuera de Customer Care)',color:'#9AA6B6'},OK:{name:'Conecta · otros usuarios',color:'#B8C2CE'}};
+const FK={C:{a:'ac',rc:'rcc',rw:'rwc',t:'tc'},CC:{a:'ak',rc:'rck',rw:'rwk',t:'tk'},'2L':{a:'a2',rc:'rc2',rw:'rw2',t:'t2'},OT:{a:'ao',rc:'rco',rw:'rwo',t:'to'},OK:{a:'aq',rc:'rcq',rw:'rwq',t:'tq'},CT:{a:'ax',rc:'rcx',rw:'rwx',t:'tx'}};
+const CHKEY={C:'Central',CT:'Conecta Todo',CC:'Conecta Conductor','2L':'Conecta 2L',OT:'Otros',OK:'Otros K'};
 const DOWL=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWF=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const pad=h=>String(h).padStart(2,'0');
@@ -440,7 +440,7 @@ function dayOrder(){return mode==='fri'?[4,5,6,0,1,2,3]:[0,1,2,3,4,5,6];}
 function isDaySel(dw){return !daySel.size||daySel.has(dw);}
 function weekAgg(o){
   if(!daySel.size||!o.days)return o;
-  const P2=['lc','lk','wc','wk','rcc','rck','rwc','rwk','tc','tk','l2','w2','rc2','rw2','t2','lo','wo','rco','rwo','to'],P3=['ac','ak','a2','ao'];
+  const P2=['lc','lk','wc','wk','rcc','rck','rwc','rwk','tc','tk','l2','w2','rc2','rw2','t2','lo','wo','rco','rwo','to','lq','wq','rcq','rwq','tq','lx','wx','rcx','rwx','tx'],P3=['ac','ak','a2','ao','aq','ax'];
   const a={label:o.label,rng:o.rng};P2.forEach(f=>a[f]=[0,0]);P3.forEach(f=>a[f]=[0,0,0]);
   o.days.forEach(dc=>{if(!isDaySel(dc.d))return;
     P2.forEach(f=>{a[f][0]+=dc[f][0];a[f][1]+=dc[f][1];});
@@ -464,9 +464,11 @@ function fillDayFilter(){
 }
 try{const s=localStorage.getItem('slaAgExcl');if(s)agExcl=new Set(JSON.parse(s));}catch(e){}
 function saveExcl(){try{localStorage.setItem('slaAgExcl',JSON.stringify([...agExcl]));}catch(e){}}
-function selChans(){return CH[chanSel]?[chanSel]:['C','CC','2L','OT'];}
+/* selChans = sub-canales atómicos (para registros sueltos: llamadas cortas); chans() = series a mostrar */
+function selChans(){return chanSel==='CT'?['CC','2L','OK']:CH[chanSel]?[chanSel]:['C','CC','2L','OT','OK'];}
 function heatKey(){return CHKEY[chanSel]||'Total';}
-function chans(){const A={C:{k:'C',ln:'lc',wn:'wc',nm:'Central'},CC:{k:'CC',ln:'lk',wn:'wk',nm:'Conecta 1ª'},'2L':{k:'2L',ln:'l2',wn:'w2',nm:'Conecta 2ª'},OT:{k:'OT',ln:'lo',wn:'wo',nm:'Otros'}};return selChans().map(k=>A[k]);}
+function viewChans(){return chanSel==='todos'?['C','CT','OT']:[chanSel];}
+function chans(){const A={C:{k:'C',ln:'lc',wn:'wc',nm:'Central'},CC:{k:'CC',ln:'lk',wn:'wk',nm:'Conecta 1ª'},'2L':{k:'2L',ln:'l2',wn:'w2',nm:'Conecta 2ª'},OT:{k:'OT',ln:'lo',wn:'wo',nm:'Otros'},CT:{k:'CT',ln:'lx',wn:'wx',nm:'Conecta'}};return viewChans().map(k=>A[k]);}
 function tot(o,med){let d=0,n=0;chans().forEach(c=>{const p=o[med==='l'?c.ln:c.wn];d+=p[0];n+=p[1];});return d?n/d:null;}
 function fmtSec(s){if(s==null)return '-';s=Math.round(s);if(s<60)return s+'s';const m=Math.floor(s/60),r=s%60;return m+'m '+String(r).padStart(2,'0')+'s';}
 function fmtDur(s){if(s==null)return '-';s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);if(h)return h+'h '+String(m).padStart(2,'0')+'m';return fmtSec(s);}
@@ -546,7 +548,7 @@ function renderVol(){
 
 /* ---- abandono (llamadas) ---- */
 function renderAb(){
-  const rows=selWeekRows(),cs=selChans(),labels=rows.map(o=>o.label);
+  const rows=selWeekRows(),cs=viewChans(),labels=rows.map(o=>o.label);
   const ds=[];cs.forEach(k=>{const fld=FK[k].a,col=CH[k].color;
     ds.push({label:'Aband. '+CH[k].name,data:rows.map(o=>{const p=o[fld];return p[0]?+(100*p[1]/p[0]).toFixed(1):null;}),borderColor:col,backgroundColor:col,borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});
     ds.push({label:'Homolog. '+CH[k].name,data:rows.map(o=>{const p=o[fld],r=abHom(p[0],p[1],p[2]||0);return r==null?null:+(100*r).toFixed(1);}),borderColor:col,backgroundColor:col,borderDash:[5,4],borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});});
@@ -602,7 +604,7 @@ function heatLegend(view,info){
 function renderHeatInto(metric,elId,legId){
   const H=DATA[mode].heat,metricG=H[metric],chK=heatKey();
   const selKeys=H.weeks.filter(w=>isSel(w.label)).map(w=>w.key);
-  const nSel=selKeys.length||1,chs2=chK==='Total'?['Central','Conecta Conductor','Conecta 2L','Otros']:[chK];
+  const nSel=selKeys.length||1,chs2=chK==='Total'?['Central','Conecta Todo','Otros']:[chK];
   const grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
   selKeys.forEach(k=>{const wg=metricG[k];if(!wg)return;chs2.forEach(cc=>{const g=wg[cc];if(!g)return;
     for(let dd=0;dd<7;dd++)for(let h=0;h<24;h++){grid[dd][h][0]+=g[dd][h][0];grid[dd][h][1]+=g[dd][h][1];}});});
@@ -640,7 +642,7 @@ function abColor(p){const t=p<=0.04?0:p>=0.25?1:(p-0.04)/0.21;return 'hsl('+Math
 function renderAbHeat(){
   const H=DATA[mode].heat;if(!H||!H.ab){$('hmAb').innerHTML='<tbody><tr><td class="rl">Sin datos.</td></tr></tbody>';$('hmLegAb').innerHTML='';return;}
   const chK=heatKey(),selKeys=H.weeks.filter(w=>isSel(w.label)).map(w=>w.key),nSel=selKeys.length||1;
-  const chs2=chK==='Total'?['Central','Conecta Conductor','Conecta 2L','Otros']:[chK];
+  const chs2=chK==='Total'?['Central','Conecta Todo','Otros']:[chK];
   const grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
   selKeys.forEach(k=>{const wg=H.ab[k];if(!wg)return;chs2.forEach(cc=>{const g=wg[cc];if(!g)return;
     for(let dd=0;dd<7;dd++)for(let h=0;h<24;h++){grid[dd][h][0]+=g[dd][h][0];grid[dd][h][1]+=g[dd][h][1];}});});
@@ -860,7 +862,8 @@ function selectedHours(){if(agtScope==='turnos'){const s=new Set();['m','t','n']
 function agtHeatWeeks(){return (DATA[mode].agdhs.weeks||[]).filter(w=>isSel(w.label)&&(agtHmWeeks===null||agtHmWeeks.has(w.label)));}
 function agtGrid(name){const chK=heatKey(),grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
   const r=(DATA[mode].agdhs.rows||[]).find(x=>x.name===name);if(!r)return grid;
-  agtHeatWeeks().forEach(w=>{const g=r.wk[w.key]&&r.wk[w.key][chK];if(g)for(let dd=0;dd<7;dd++)for(let hh=0;hh<24;hh++){grid[dd][hh][0]+=g[dd][hh][0];grid[dd][hh][1]+=g[dd][hh][1];}});
+  const ks=chK==='Total'?['Central','Conecta Conductor','Conecta 2L','Otros','Otros K']:chK==='Conecta Todo'?['Conecta Conductor','Conecta 2L','Otros K']:[chK];
+  agtHeatWeeks().forEach(w=>ks.forEach(kc=>{const g=r.wk[w.key]&&r.wk[w.key][kc];if(g)for(let dd=0;dd<7;dd++)for(let hh=0;hh<24;hh++){grid[dd][hh][0]+=g[dd][hh][0];grid[dd][hh][1]+=g[dd][hh][1];}}));
   return grid;}
 function agtHasHours(name){const g=agtGrid(name),has=[];for(let h=0;h<24;h++){for(let dd=0;dd<7;dd++){if(g[dd][h][0]){has.push(h);break;}}}return has;}
 function fillAgtHours(name){const has=agtHasHours(name);if(agtHours===null)agtHours=new Set(has);
