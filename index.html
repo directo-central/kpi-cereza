@@ -175,6 +175,13 @@
  .dayFilter[open]>summary{border-color:var(--central);color:var(--central)}
  .dayFilter .aglist{position:absolute;z-index:30;right:0;margin-top:6px;box-shadow:var(--shadow);min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;max-height:300px;overflow:auto}
  .wktog{display:inline-block;width:1.05em;text-align:center;color:var(--central);cursor:pointer;font-weight:700;user-select:none;margin-right:2px}
+ .fbchip{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;margin:1px 2px;white-space:nowrap;background:#fde8e8;color:#b42318}
+ .fbchip.ok{background:#e3f4ea;color:#17703f}
+ .fbrow td{background:var(--surface-2);text-align:left!important;white-space:normal!important;font-size:12.5px;line-height:1.45}
+ .fbbox ul{margin:4px 0 2px 18px;padding:0}.fbbox li{margin:2px 0}.fbbox .fbt{font-weight:700;color:var(--ink)}.fbbox .fbg{color:#17703f}
+ .fbcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:10px}
+ .fbcard{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:var(--surface);font-size:12.5px;line-height:1.45}
+ .fbcard h4{margin:0 0 4px;font-size:14px;display:flex;justify-content:space-between;gap:8px}
  .prodtog,.watog{display:inline-block;width:1.05em;text-align:center;color:var(--central);cursor:pointer;font-weight:700;user-select:none;margin-right:4px}
  tr.prow td{background:var(--surface-2);color:var(--muted);font-size:12px}
  tr.prow td:first-child{color:var(--ink);padding-left:14px;white-space:nowrap}
@@ -321,10 +328,14 @@
  </div>
 
  <div class="tabview" data-tab="prod" hidden>
-   <div class="panel"><div class="phead"><h3>Productividad por agente</h3><div class="dayctrls"><div class="miniseg prodexp"><button type="button" data-exp="1">Expandir</button><button type="button" data-exp="0">Contraer</button></div><button class="copy mini" data-copy="tbProd">Copiar</button></div></div>
-     <div class="sub2">Ranking por persona sobre las semanas seleccionadas. <b>Volumen</b> = llamadas atendidas + chats (1=1). El SLA/velocidad de <b>WhatsApp</b> sí es del agente; el de <b>llamadas no</b> (es de cola), por eso llamadas solo aporta volumen y adherencia. Jornada = 8 h por día activo; el turno noche (22:00–06:00) cuenta como un día. <b>Índice 0–100</b> con pesos configurables (hoy SLA 30 · Volumen 25 · Ocupación/adherencia 25 · Velocidad 20); se re-normaliza por agente según lo que aplique. No depende del filtro de Canal.</div>
+   <div class="panel"><div class="phead"><h3>Productividad por agente</h3><div class="dayctrls"><div class="miniseg prodexp"><button type="button" data-exp="1">Expandir</button><button type="button" data-exp="0">Contraer</button></div><details class="dayFilter" id="prodAgF"><summary id="prodAgSum">Agentes: todos &#9662;</summary><div class="aglist" style="min-width:240px;flex-direction:column;flex-wrap:nowrap;gap:6px"><input id="prodAgQ" type="search" placeholder="Buscar agente&hellip;" autocomplete="off" style="height:30px;padding:0 8px;border:1px solid var(--line);border-radius:7px;font-size:12.5px"><div class="hmquick" style="margin:0"><a data-pa="all">Todos</a> &middot; <a data-pa="none">Ninguno</a> &middot; <a data-pa="vis">Solo los buscados</a></div><div id="prodAgList" style="display:flex;flex-direction:column;gap:5px"></div></div></details><button class="copy mini" data-copy="tbProd">Copiar</button></div></div>
+     <div class="sub2">Ranking por persona sobre las semanas seleccionadas. <b>Volumen</b> = llamadas atendidas + chats (1=1). El SLA/velocidad de <b>WhatsApp</b> sí es del agente; el de <b>llamadas no</b> (es de cola), por eso llamadas solo aporta volumen y adherencia. Jornada = 8 h por día activo; el turno noche (22:00–06:00) cuenta como un día. <b>Índice 0–100</b> con pesos configurables (hoy SLA 30 · Volumen 25 · Ocupación/adherencia 25 · Velocidad 20); se re-normaliza por agente según lo que aplique. No depende del filtro de Canal. El filtro <b>Agentes</b> sólo muestra u oculta filas: el Índice y el ranking se calculan siempre contra todo el equipo.</div>
      <div class="scroll"><table id="tbProd" style="min-width:0"></table></div>
      <div class="sub2" style="margin-top:10px">"% Pausa" = pausa ÷ (8 h × días activos). "Adher." = % de días sin exceder los límites de pausa (Refrigerio 35 / SS.HH. 25). El SLA de llamadas se omite por agente a propósito (no imputable). <b>Toca el ▸ de un agente</b> (o usa Expandir) para abrir su detalle por día; Adher. por día es ✓/✗ según si ese día excedió los límites.</div>
+   </div>
+   <div class="panel"><div class="phead"><h3>Feedback por agente · qué trabajar para llegar a la meta</h3><div class="dayctrls"><button class="copy mini" data-copy="prodFb">Copiar</button></div></div>
+     <div class="sub2">Se genera solo con los números de las semanas elegidas y respeta el filtro <b>Agentes</b>. Metas: <b>SLA WA ≥ 80%</b> · <b>1ª respuesta (FRT) ≤ 15 min</b> · <b>% Pausa ≤ 10%</b> · <b>Adherencia ≥ 95%</b> · <b>Índice ≥ 80</b>. TMO y atenciones/día se comparan con el promedio del equipo (alerta si el TMO supera en 25% al equipo o las atenciones/día quedan bajo el 75%). Ordenado de más a menos puntos por trabajar.</div>
+     <div class="fbcards" id="prodFb"></div>
    </div>
  </div>
 
@@ -400,8 +411,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 12/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611121419"></script>
-<script src="sla_data_2.js?v=202611121419"></script>
+<script src="sla_data_1.js?v=202611121440"></script>
+<script src="sla_data_2.js?v=202611121440"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -882,16 +893,52 @@ function renderAgente(){if(!$('agtSel'))return;const name=agtName();if(!name)ret
 /* ---- pestaña PRODUCTIVIDAD ---- */
 const scoreCls=s=>s==null?'':s>=80?'g':s>=60?'a':'b';
 let prodOpen=new Set();
+let prodAgSel=null;/* null = todos */
+try{const s=localStorage.getItem('slaProdAg');if(s){const a=JSON.parse(s);if(Array.isArray(a))prodAgSel=new Set(a);}}catch(e){}
+function saveProdAg(){try{if(prodAgSel)localStorage.setItem('slaProdAg',JSON.stringify([...prodAgSel]));else localStorage.removeItem('slaProdAg');}catch(e){}}
+const prodAgOn=n=>!prodAgSel||prodAgSel.has(n);
+let prodAgNames=[];
+function fillProdAg(){const box=$('prodAgList');if(!box)return;const q=(($('prodAgQ')||{}).value||'').trim().toLowerCase();
+  box.innerHTML='';const vis=prodAgNames.filter(n=>!q||n.toLowerCase().includes(q));
+  vis.forEach(n=>{const lab=document.createElement('label');lab.className='agchk';const cb=document.createElement('input');cb.type='checkbox';cb.checked=prodAgOn(n);
+    cb.onchange=()=>{if(!prodAgSel)prodAgSel=new Set(prodAgNames);if(cb.checked)prodAgSel.add(n);else prodAgSel.delete(n);
+      if(prodAgNames.every(x=>prodAgSel.has(x)))prodAgSel=null;saveProdAg();renderProd();};
+    lab.appendChild(cb);lab.appendChild(document.createTextNode(' '+n));box.appendChild(lab);});
+  if(!vis.length)box.innerHTML='<span style="font-size:12px;color:var(--faint)">Sin coincidencias</span>';
+  const k=prodAgSel?prodAgNames.filter(x=>prodAgSel.has(x)).length:prodAgNames.length;
+  const sm=$('prodAgSum');if(sm)sm.textContent='Agentes: '+(!prodAgSel?'todos':k===1?prodAgNames.find(x=>prodAgSel.has(x)):k+' de '+prodAgNames.length)+' ▾';}
 function prodDay(d,jor){const atenc=d.llam+d.chats,sla=d.slad?d.slah/d.slad:null,frt=d.frtn?d.frts/d.frtn:null,tmo=d.tmon?d.tmos/d.tmon:null,pausa=jor?d.pausa/jor:null;
   const ppd=v=>v==null?'-':(v*100).toFixed(0)+'%';
   return '<tr class="prow"><td><span class="dind">↳</span> '+DOWL[d.dw]+' '+d.dt+'</td><td></td><td>'+atenc+'</td><td></td><td>'+d.llam+'</td><td>'+d.chats+'</td><td class="'+cls(sla)+'">'+fmt(sla)+'</td><td>'+fmtSec(frt)+'</td><td>'+fmtDur(tmo)+'</td><td class="'+(pausa!=null&&pausa>0.15?'b':pausa!=null&&pausa>0.10?'a':'')+'">'+ppd(pausa)+'</td><td class="'+(d.exc?'b':'g')+'">'+(d.exc?'✗':'✓')+'</td><td></td></tr>';}
+const FB_META={sla:0.80,frt:15*60,pausa:0.10,adher:0.95,score:80};
+function prodFeedback(x,team){const w=[],g=[],ch=[];const pct=v=>(v*100).toFixed(0)+'%';
+  if(x.sla!=null){if(x.sla<FB_META.sla){ch.push('SLA');w.push('<span class="fbt">SLA WhatsApp '+pct(x.sla)+'</span> (meta 80%, le faltan '+((FB_META.sla-x.sla)*100).toFixed(0)+' pts'+(x.worst?'; su peor día fue '+x.worst.lab+' con '+pct(x.worst.v):'')+'). Tomar primero los chats nuevos o en espera, enviar el saludo apenas se asigna el chat y usar respuestas rápidas para no pasar el tiempo objetivo.');}
+    else g.push('SLA '+pct(x.sla));}
+  if(x.frt!=null){if(x.frt>FB_META.frt){ch.push('1ª resp.');w.push('<span class="fbt">Primera respuesta '+fmtSec(x.frt)+'</span> (meta ≤ 15 min). Responder al cliente aunque sea para confirmar que se está revisando su caso; no esperar a tener la solución completa.');}
+    else g.push('1ª respuesta '+fmtSec(x.frt));}
+  if(x.tmo!=null&&team.tmo){if(x.tmo>team.tmo*1.25){ch.push('TMO');w.push('<span class="fbt">TMO WhatsApp '+fmtDur(x.tmo)+'</span> vs '+fmtDur(team.tmo)+' del equipo. Agrupar la información en un solo mensaje, usar plantillas y cerrar el chat cuando el caso quede resuelto (o tras el aviso de inactividad).');}
+    else if(x.tmo<=team.tmo)g.push('TMO bajo el equipo');}
+  if(x.pctPausa!=null){if(x.pctPausa>FB_META.pausa){ch.push('Pausa');w.push('<span class="fbt">Pausa '+pct(x.pctPausa)+' de la jornada</span> (límite 10%). Respetar Refrigerio 35 min y SS.HH. 25 min, y no dejar pausas abiertas al volver al puesto.');}
+    else g.push('Pausa '+pct(x.pctPausa));}
+  if(x.adher!=null){if(x.adher<FB_META.adher){const ex=x.ndias-Math.round(x.adher*x.ndias);ch.push('Adher.');w.push('<span class="fbt">Adherencia '+pct(x.adher)+'</span>: excedió los límites de pausa '+ex+' de '+x.ndias+' día'+(x.ndias===1?'':'s')+'. Programar la pausa en su horario y avisar al supervisor si necesita extenderla.');}
+    else g.push('Adherencia '+pct(x.adher));}
+  if(team.ad&&x.ndias){if(x.atencDia<team.ad*0.75){ch.push('Volumen');w.push('<span class="fbt">'+x.atencDia.toFixed(1)+' atenciones/día</span> vs '+team.ad.toFixed(1)+' del equipo. Revisar que esté conectado y disponible en cola y WhatsApp todo el turno, y tomar chats en simultáneo cuando la cola lo pida.');}
+    else if(x.atencDia>=team.ad)g.push('Volumen sobre el equipo');}
+  return {w,g,ch};}
+function fbHtml(f,x){let h='<div class="fbbox">';
+  if(f.w.length)h+='<div><b>A trabajar:</b></div><ul>'+f.w.map(t=>'<li>'+t+'</li>').join('')+'</ul>';
+  else h+='<div class="fbg"><b>En meta en todo lo medible.</b> Mantener el ritmo; puede servir de referente para el equipo.</div>';
+  if(f.g.length)h+='<div class="fbg"><b>Fortalezas:</b> '+f.g.join(' · ')+'.</div>';
+  if(x.score!=null&&x.score<FB_META.score&&f.w.length)h+='<div style="color:var(--muted);margin-top:3px">Índice '+x.score.toFixed(0)+' (meta 80): empezar por el primer punto de la lista.</div>';
+  return h+'</div>';}
 function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
   const wks=(P.weeks||[]).filter(w=>isSel(w.label)),jor=P.jornada||28800,PES=DATA.pesos||{volumen:25,sla:30,velocidad:20,ocupacion:25};
-  const list=P.rows.map(r=>{let llam=0,chats=0,slad=0,slah=0,frts=0,frtn=0,tmos=0,tmon=0,pausa=0,ndias=0,nexc=0;
+  let list=P.rows.map(r=>{let llam=0,chats=0,slad=0,slah=0,frts=0,frtn=0,tmos=0,tmon=0,pausa=0,ndias=0,nexc=0;
     wks.forEach(w=>{const o=r.wk[w.label];if(!o)return;llam+=o.llam;chats+=o.chats;slad+=o.slad;slah+=o.slah;frts+=o.frts;frtn+=o.frtn;tmos+=o.tmos;tmon+=o.tmon;pausa+=o.pausa;ndias+=o.ndias;nexc+=o.nexc;});
     const atenc=llam+chats;if(!ndias&&!atenc)return null;
     const sla=slad?slah/slad:null,frt=frtn?frts/frtn:null,tmo=tmon?tmos/tmon:null;
-    return {name:r.name,src:r,ndias,llam,chats,atenc,atencDia:ndias?atenc/ndias:0,sla,frt,tmo,
+    let worst=null;wks.forEach(w=>{const o=r.wk[w.label];if(o&&o.days)o.days.forEach(d=>{if(d.slad>=5){const v=d.slah/d.slad;if(!worst||v<worst.v)worst={v,lab:DOWL[d.dw]+' '+d.dt};}});});
+    return {name:r.name,src:r,worst,ndias,llam,chats,atenc,atencDia:ndias?atenc/ndias:0,sla,frt,tmo,
       pctPausa:ndias?pausa/(jor*ndias):null,adher:ndias?(ndias-nexc)/ndias:null};}).filter(Boolean);
   const maxAD=Math.max(1,...list.map(x=>x.atencDia));
   const idx=x=>{const d=[];d.push([PES.volumen,Math.min(x.atencDia/maxAD,1)*100]);
@@ -900,20 +947,28 @@ function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
     const tw=d.reduce((a,e)=>a+e[0],0);return tw?d.reduce((a,e)=>a+e[0]*e[1],0)/tw:null;};
   list.forEach(x=>x.score=idx(x));
   list.sort((a,b)=>(b.score==null?-1:b.score)-(a.score==null?-1:a.score));
+  list.forEach((x,i)=>x.rank=i+1);
+  prodAgNames=list.map(x=>x.name).sort((a,b)=>a.localeCompare(b,'es'));fillProdAg();
+  const tmoL=list.filter(x=>x.tmo!=null),tD=list.reduce((a,x)=>a+x.ndias,0),tA=list.reduce((a,x)=>a+x.atenc,0);
+  const team={tmo:tmoL.length?tmoL.reduce((a,x)=>a+x.tmo,0)/tmoL.length:null,ad:tD?tA/tD:null};
+  list.forEach(x=>x.fb=prodFeedback(x,team));
+  const full=list.length;list=list.filter(x=>prodAgOn(x.name));
   const pp=v=>v==null?'-':(v*100).toFixed(0)+'%';
-  let h='<thead><tr><th>Agente</th><th>Días</th><th>Atenc.</th><th>/día</th><th>Llam</th><th>Chats</th><th class="wg">SLA WA</th><th>FRT WA</th><th>TMO WA</th><th>% Pausa</th><th>Adher.</th><th>Índice</th></tr></thead><tbody>';
+  let h='<thead><tr><th>Agente</th><th>Días</th><th>Atenc.</th><th>/día</th><th>Llam</th><th>Chats</th><th class="wg">SLA WA</th><th>FRT WA</th><th>TMO WA</th><th>% Pausa</th><th>Adher.</th><th>Índice</th><th style="text-align:left">A trabajar</th></tr></thead><tbody>';
   let T={n:0,d:0,at:0,ll:0,ch:0};
   list.forEach(x=>{const op=prodOpen.has(x.name),tog='<span class="prodtog" data-ag="'+x.name.replace(/"/g,'&quot;')+'">'+(op?'▾':'▸')+'</span>';
-    h+='<tr><td>'+tog+x.name+'</td><td>'+x.ndias+'</td><td>'+x.atenc+'</td><td>'+x.atencDia.toFixed(1)+'</td><td>'+x.llam+'</td><td>'+x.chats+'</td><td class="'+cls(x.sla)+'">'+fmt(x.sla)+'</td><td>'+fmtSec(x.frt)+'</td><td>'+fmtDur(x.tmo)+'</td><td class="'+(x.pctPausa!=null&&x.pctPausa>0.15?'b':x.pctPausa!=null&&x.pctPausa>0.10?'a':'')+'">'+pp(x.pctPausa)+'</td><td class="'+(x.adher!=null&&x.adher<0.8?'b':x.adher!=null&&x.adher<0.95?'a':'')+'">'+pp(x.adher)+'</td><td class="'+scoreCls(x.score)+'">'+(x.score==null?'-':x.score.toFixed(0))+'</td></tr>';
-    if(op){const days=[];wks.forEach(w=>{const o=x.src.wk[w.label];if(o&&o.days)o.days.forEach(dd=>days.push(dd));});
+    h+='<tr><td>'+tog+x.name+(prodAgSel?' <span style="color:var(--faint);font-size:11px;font-weight:500">#'+x.rank+' de '+full+'</span>':'')+'</td><td>'+x.ndias+'</td><td>'+x.atenc+'</td><td>'+x.atencDia.toFixed(1)+'</td><td>'+x.llam+'</td><td>'+x.chats+'</td><td class="'+cls(x.sla)+'">'+fmt(x.sla)+'</td><td>'+fmtSec(x.frt)+'</td><td>'+fmtDur(x.tmo)+'</td><td class="'+(x.pctPausa!=null&&x.pctPausa>0.15?'b':x.pctPausa!=null&&x.pctPausa>0.10?'a':'')+'">'+pp(x.pctPausa)+'</td><td class="'+(x.adher!=null&&x.adher<0.8?'b':x.adher!=null&&x.adher<0.95?'a':'')+'">'+pp(x.adher)+'</td><td class="'+scoreCls(x.score)+'">'+(x.score==null?'-':x.score.toFixed(0))+'</td><td style="text-align:left;white-space:normal;min-width:150px">'+(x.fb.ch.length?x.fb.ch.map(c=>'<span class="fbchip">'+c+'</span>').join(''):'<span class="fbchip ok">En meta</span>')+'</td></tr>';
+    if(op){h+='<tr class="fbrow"><td colspan="13">'+fbHtml(x.fb,x)+'</td></tr>';const days=[];wks.forEach(w=>{const o=x.src.wk[w.label];if(o&&o.days)o.days.forEach(dd=>days.push(dd));});
       days.sort((a,b)=>a.k<b.k?-1:a.k>b.k?1:0);
-      if(days.length)days.forEach(dd=>h+=prodDay(dd,jor));else h+='<tr class="prow"><td>'+"↳ sin días"+'</td><td colspan="11"></td></tr>';}
+      if(days.length)days.forEach(dd=>h+=prodDay(dd,jor));else h+='<tr class="prow"><td>'+"↳ sin días"+'</td><td colspan="12"></td></tr>';}
     T.n++;T.d+=x.ndias;T.at+=x.atenc;T.ll+=x.llam;T.ch+=x.chats;});
   if(list.length){const avSla=list.filter(x=>x.sla!=null),as=avSla.length?avSla.reduce((a,x)=>a+x.sla,0)/avSla.length:null;
     const avScore=list.filter(x=>x.score!=null),asc=avScore.length?avScore.reduce((a,x)=>a+x.score,0)/avScore.length:null;
-    h+='<tr class="tot"><td>Equipo ('+T.n+')</td><td>'+T.d+'</td><td>'+T.at+'</td><td>'+(T.d?(T.at/T.d).toFixed(1):'0')+'</td><td>'+T.ll+'</td><td>'+T.ch+'</td><td class="'+cls(as)+'">'+fmt(as)+'</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+scoreCls(asc)+'">'+(asc==null?'-':asc.toFixed(0))+'</td></tr>';}
-  $('tbProd').innerHTML=h+(list.length?'':'<tr><td>Sin datos.</td></tr>')+'</tbody>';}
-function setAllProd(open){const P=DATA[mode].prod;if(!P)return;if(open)(P.rows||[]).forEach(r=>prodOpen.add(r.name));else prodOpen.clear();renderProd();}
+    h+='<tr class="tot"><td>'+(prodAgSel?'Selección':'Equipo')+' ('+T.n+')</td><td>'+T.d+'</td><td>'+T.at+'</td><td>'+(T.d?(T.at/T.d).toFixed(1):'0')+'</td><td>'+T.ll+'</td><td>'+T.ch+'</td><td class="'+cls(as)+'">'+fmt(as)+'</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+scoreCls(asc)+'">'+(asc==null?'-':asc.toFixed(0))+'</td><td></td></tr>';}
+  if($('prodFb')){const fl=list.slice().sort((a,b)=>b.fb.w.length-a.fb.w.length||((a.score==null?999:a.score)-(b.score==null?999:b.score)));
+    $('prodFb').innerHTML=fl.length?fl.map(x=>'<div class="fbcard"><h4><span>'+x.name+'</span><span class="'+scoreCls(x.score)+'" style="font-size:12px;padding:1px 8px;border-radius:6px">Índice '+(x.score==null?'-':x.score.toFixed(0))+'</span></h4>'+fbHtml(x.fb,x)+'</div>').join(''):'<div class="sub2">Sin agentes para mostrar.</div>';}
+  $('tbProd').innerHTML=h+(list.length?'':'<tr><td>'+(full?'Ningún agente seleccionado.':'Sin datos.')+'</td></tr>')+'</tbody>';}
+function setAllProd(open){const P=DATA[mode].prod;if(!P)return;if(open)(P.rows||[]).filter(r=>prodAgOn(r.name)).forEach(r=>prodOpen.add(r.name));else prodOpen.clear();renderProd();}
 
 /* ---- conexión por agente ---- */
 let conexOpen=new Set();
@@ -1196,6 +1251,12 @@ document.querySelectorAll('.dayexp button').forEach(b=>b.onclick=()=>setAllWeeks
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.wktog');if(t)toggleWeek(t.dataset.wk);});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.prodtog:not(.conextog)');if(t){if(prodOpen.has(t.dataset.ag))prodOpen.delete(t.dataset.ag);else prodOpen.add(t.dataset.ag);renderProd();}});
 document.querySelectorAll('.prodexp button').forEach(b=>b.onclick=()=>setAllProd(b.dataset.exp==='1'));
+if($('prodAgQ'))$('prodAgQ').oninput=fillProdAg;
+document.querySelectorAll('#prodAgF [data-pa]').forEach(a=>a.onclick=()=>{const m=a.dataset.pa;
+  if(m==='all')prodAgSel=null;else if(m==='none')prodAgSel=new Set();
+  else{const q=(($('prodAgQ')||{}).value||'').trim().toLowerCase();prodAgSel=new Set(prodAgNames.filter(n=>!q||n.toLowerCase().includes(q)));if(prodAgNames.every(x=>prodAgSel.has(x)))prodAgSel=null;}
+  saveProdAg();renderProd();});
+document.addEventListener('click',e=>{const f=$('prodAgF');if(f&&f.open&&!f.contains(e.target))f.open=false;});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.conextog');if(t){if(conexOpen.has(t.dataset.ag))conexOpen.delete(t.dataset.ag);else conexOpen.add(t.dataset.ag);renderConex();}});
 document.querySelectorAll('.conexp button').forEach(b=>b.onclick=()=>setAllConex(b.dataset.exp==='1'));
 $('conexWk').onchange=()=>renderConexWk();
