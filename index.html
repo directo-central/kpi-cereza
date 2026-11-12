@@ -216,7 +216,7 @@
    <div class="ctrls">
      <span class="seg" id="seg"><button data-w="mon" class="active">Lun–Dom</button><button data-w="fri">Vie–Jue</button></span>
      <div class="fld"><span>Canal</span>
-       <select id="chan"><option value="todos">Todos</option><option value="C">Central</option><option value="CC">Conecta Conductor</option></select></div>
+       <select id="chan"><option value="todos">Todos</option><option value="C">Central</option><option value="CC">Conecta 1ª línea</option><option value="2L">Conecta 2ª línea</option></select></div>
      <details id="wkFilter"><summary id="wkSummary">Semanas: todas ▾</summary>
        <div class="hmquick"><a data-q="0">Todas</a> · <a data-q="4">Últimas 4</a> · <a data-q="8">Últimas 8</a></div>
        <div class="aglist" id="wkList"></div>
@@ -332,7 +332,7 @@
 
  <div class="tabview" data-tab="prod" hidden>
    <div class="panel"><div class="phead"><h3>Productividad por agente</h3><div class="dayctrls"><div class="miniseg prodexp"><button type="button" data-exp="1">Expandir</button><button type="button" data-exp="0">Contraer</button></div><details class="dayFilter" id="prodAgF"><summary id="prodAgSum">Agentes: todos &#9662;</summary><div class="aglist" style="min-width:240px;flex-direction:column;flex-wrap:nowrap;gap:6px"><input id="prodAgQ" type="search" placeholder="Buscar agente&hellip;" autocomplete="off" style="height:30px;padding:0 8px;border:1px solid var(--line);border-radius:7px;font-size:12.5px"><div class="hmquick" style="margin:0"><a data-pa="all">Todos</a> &middot; <a data-pa="none">Ninguno</a> &middot; <a data-pa="vis">Solo los buscados</a></div><div id="prodAgList" style="display:flex;flex-direction:column;gap:5px"></div></div></details><button class="copy mini" data-copy="tbProd">Copiar</button></div></div>
-     <div class="sub2">Ranking por persona sobre las semanas seleccionadas. <b>Volumen</b> = llamadas atendidas + chats (1=1). El SLA/velocidad de <b>WhatsApp</b> sí es del agente; el de <b>llamadas no</b> (es de cola), por eso llamadas solo aporta volumen y adherencia. Jornada = 8 h por día activo; el turno noche (22:00–06:00) cuenta como un día. <b>Índice 0–100</b> con pesos configurables (hoy SLA 30 · Volumen 25 · Ocupación/adherencia 25 · Velocidad 20); se re-normaliza por agente según lo que aplique. No depende del filtro de Canal. El filtro <b>Agentes</b> sólo muestra u oculta filas: el Índice y el ranking se calculan siempre contra todo el equipo. La <b>2ª línea de Conecta</b> (otro equipo) va en un bloque aparte, fuera del ranking y del total de Customer Care, desde la fecha en que pasó a 2ª línea (Mirlandy desde junio; el resto desde el 03/09); antes de esa fecha suma en Customer Care.</div>
+     <div class="sub2">Ranking por persona sobre las semanas seleccionadas. <b>Volumen</b> = llamadas atendidas + chats (1=1). El SLA/velocidad de <b>WhatsApp</b> sí es del agente; el de <b>llamadas no</b> (es de cola), por eso llamadas solo aporta volumen y adherencia. Jornada = 8 h por día activo; el turno noche (22:00–06:00) cuenta como un día. <b>Índice 0–100</b> con pesos configurables (hoy SLA 30 · Volumen 25 · Ocupación/adherencia 25 · Velocidad 20); se re-normaliza por agente según lo que aplique. No depende del filtro de Canal. El filtro <b>Agentes</b> sólo muestra u oculta filas: el Índice y el ranking se calculan siempre contra todo el equipo. La <b>2ª línea de Conecta</b> (otro equipo) va en un bloque aparte, fuera del ranking y del total de Customer Care, desde la fecha en que pasó a 2ª línea (Mirlandy desde junio; el resto desde el 03/09); antes de esa fecha suma en Customer Care. <b>Soporte App</b> (soporte al pasajero por fallas de la app) también va aparte. Los usuarios marcados "-" en el Maestro (control, pruebas, otras áreas) y los chats sin agente no se muestran.</div>
      <div class="scroll"><table id="tbProd" style="min-width:0"></table></div>
      <div class="sub2" style="margin-top:10px">"% Pausa" = pausa ÷ (8 h × días activos). "Adher." = % de días sin exceder los límites de pausa (Refrigerio 35 / SS.HH. 25). El SLA de llamadas se omite por agente a propósito (no imputable). <b>Toca el ▸ de un agente</b> (o usa Expandir) para abrir su detalle por día; Adher. por día es ✓/✗ según si ese día excedió los límites.</div>
    </div>
@@ -414,8 +414,8 @@
 
  <footer>Llamadas &le; 20s &middot; WhatsApp &le; 15min &middot; meta 80%. Verde &ge;80%, &aacute;mbar 70-80%, rojo &lt;70%. Generado 12/11/2026.</footer>
 </div>
-<script src="sla_data_1.js?v=202611121516"></script>
-<script src="sla_data_2.js?v=202611121516"></script>
+<script src="sla_data_1.js?v=202611121649"></script>
+<script src="sla_data_2.js?v=202611121649"></script>
 <script>
 const DATA=window.__SLA;
 const RING=8;
@@ -429,7 +429,9 @@ const cls=v=>v==null?'':(v>=.8?'g':v>=.7?'a':'b');
 const sla=p=>(p&&p[0])?p[1]/p[0]:null;
 const abHom=(off,aband,hom)=>{const base=off-(aband-hom);return base>0?hom/base:null;};
 const abCls=v=>v==null?'':v>0.08?'b':v>0.05?'a':'';
-const CH={C:{name:'Central',color:'#2C63F0'},CC:{name:'Conecta Conductor',color:'#0FA8A0'}};
+const CH={C:{name:'Central',color:'#2C63F0'},CC:{name:'Conecta 1ª línea',color:'#0FA8A0'},'2L':{name:'Conecta 2ª línea',color:'#8B5CF6'},OT:{name:'Otros (fuera de Customer Care)',color:'#9AA6B6'}};
+const FK={C:{a:'ac',rc:'rcc',rw:'rwc',t:'tc'},CC:{a:'ak',rc:'rck',rw:'rwk',t:'tk'},'2L':{a:'a2',rc:'rc2',rw:'rw2',t:'t2'},OT:{a:'ao',rc:'rco',rw:'rwo',t:'to'}};
+const CHKEY={C:'Central',CC:'Conecta Conductor','2L':'Conecta 2L',OT:'Otros'};
 const DOWL=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const DOWF=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const pad=h=>String(h).padStart(2,'0');
@@ -438,7 +440,7 @@ function dayOrder(){return mode==='fri'?[4,5,6,0,1,2,3]:[0,1,2,3,4,5,6];}
 function isDaySel(dw){return !daySel.size||daySel.has(dw);}
 function weekAgg(o){
   if(!daySel.size||!o.days)return o;
-  const P2=['lc','lk','wc','wk','rcc','rck','rwc','rwk','tc','tk'],P3=['ac','ak'];
+  const P2=['lc','lk','wc','wk','rcc','rck','rwc','rwk','tc','tk','l2','w2','rc2','rw2','t2','lo','wo','rco','rwo','to'],P3=['ac','ak','a2','ao'];
   const a={label:o.label,rng:o.rng};P2.forEach(f=>a[f]=[0,0]);P3.forEach(f=>a[f]=[0,0,0]);
   o.days.forEach(dc=>{if(!isDaySel(dc.d))return;
     P2.forEach(f=>{a[f][0]+=dc[f][0];a[f][1]+=dc[f][1];});
@@ -462,9 +464,9 @@ function fillDayFilter(){
 }
 try{const s=localStorage.getItem('slaAgExcl');if(s)agExcl=new Set(JSON.parse(s));}catch(e){}
 function saveExcl(){try{localStorage.setItem('slaAgExcl',JSON.stringify([...agExcl]));}catch(e){}}
-function selChans(){if(chanSel==='C')return['C'];if(chanSel==='CC')return['CC'];return['C','CC'];}
-function heatKey(){return chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Total';}
-function chans(){const C={k:'C',ln:'lc',wn:'wc',nm:'Central'},K={k:'CC',ln:'lk',wn:'wk',nm:'C.Cond.'};if(chanSel==='C')return[C];if(chanSel==='CC')return[K];return[C,K];}
+function selChans(){return CH[chanSel]?[chanSel]:['C','CC','2L','OT'];}
+function heatKey(){return CHKEY[chanSel]||'Total';}
+function chans(){const A={C:{k:'C',ln:'lc',wn:'wc',nm:'Central'},CC:{k:'CC',ln:'lk',wn:'wk',nm:'Conecta 1ª'},'2L':{k:'2L',ln:'l2',wn:'w2',nm:'Conecta 2ª'},OT:{k:'OT',ln:'lo',wn:'wo',nm:'Otros'}};return selChans().map(k=>A[k]);}
 function tot(o,med){let d=0,n=0;chans().forEach(c=>{const p=o[med==='l'?c.ln:c.wn];d+=p[0];n+=p[1];});return d?n/d:null;}
 function fmtSec(s){if(s==null)return '-';s=Math.round(s);if(s<60)return s+'s';const m=Math.floor(s/60),r=s%60;return m+'m '+String(r).padStart(2,'0')+'s';}
 function fmtDur(s){if(s==null)return '-';s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);if(h)return h+'h '+String(m).padStart(2,'0')+'m';return fmtSec(s);}
@@ -497,8 +499,8 @@ function renderKPIs(){
   const rows=selWeekRows(),cs=chans();
   const slaBy=fld=>{let d=0,n=0;rows.forEach(o=>cs.forEach(c=>{const p=o[c[fld]];d+=p[0];n+=p[1];}));return d?n/d:null;};
   const slaL=slaBy('ln'),slaW=slaBy('wn');
-  let ao=0,aa=0,ah=0;rows.forEach(o=>cs.forEach(c=>{const p=o[c.k==='C'?'ac':'ak'];ao+=p[0];aa+=p[1];ah+=(p[2]||0);}));const ab=ao?aa/ao:null;const abH=abHom(ao,aa,ah);
-  let fs=0,fn=0;rows.forEach(o=>cs.forEach(c=>{const p=o[c.k==='C'?'rwc':'rwk'];fs+=p[0];fn+=p[1];}));const frt=fn?fs/fn:null;
+  let ao=0,aa=0,ah=0;rows.forEach(o=>cs.forEach(c=>{const p=o[FK[c.k].a];ao+=p[0];aa+=p[1];ah+=(p[2]||0);}));const ab=ao?aa/ao:null;const abH=abHom(ao,aa,ah);
+  let fs=0,fn=0;rows.forEach(o=>cs.forEach(c=>{const p=o[FK[c.k].rw];fs+=p[0];fn+=p[1];}));const frt=fn?fs/fn:null;
   let vol=0;rows.forEach(o=>cs.forEach(c=>{vol+=o[c.ln][0]+o[c.wn][0];}));
   const scope=weekSel.size?(weekSel.size===1?('Sem '+[...weekSel][0].split('Sem. ').pop()):(weekSel.size+' sem')):'Todas';
   const colOf=v=>{const c=cls(v);return c==='g'?'var(--good)':c==='a'?'var(--warn)':c==='b'?'var(--bad)':'var(--muted)';};
@@ -515,7 +517,7 @@ function renderKPIs(){
 /* ---- gráfico SLA (general) ---- */
 function renderSla(){
   const rows=selWeekRows(),cs=chans(),labels=rows.map(o=>o.label),ds=[];
-  cs.forEach(c=>{const col=c.k==='C'?'#2C63F0':'#0FA8A0';
+  cs.forEach(c=>{const col=CH[c.k].color;
     ds.push({label:'Llam. '+c.nm,data:rows.map(o=>{const v=sla(o[c.ln]);return v==null?null:+(v*100).toFixed(1);}),borderColor:col,backgroundColor:col,borderWidth:2.4,tension:.35,spanGaps:true,pointRadius:labels.length>26?0:3});
     ds.push({label:'WA '+c.nm,data:rows.map(o=>{const v=sla(o[c.wn]);return v==null?null:+(v*100).toFixed(1);}),borderColor:col,backgroundColor:col,borderDash:[5,4],borderWidth:2.4,tension:.35,spanGaps:true,pointRadius:labels.length>26?0:3});});
   ds.push({label:'Meta 80%',data:labels.map(()=>80),borderColor:'#9AA6B6',borderDash:[2,3],borderWidth:1.2,pointRadius:0});
@@ -545,7 +547,7 @@ function renderVol(){
 /* ---- abandono (llamadas) ---- */
 function renderAb(){
   const rows=selWeekRows(),cs=selChans(),labels=rows.map(o=>o.label);
-  const ds=[];cs.forEach(k=>{const fld=k==='C'?'ac':'ak',col=CH[k].color;
+  const ds=[];cs.forEach(k=>{const fld=FK[k].a,col=CH[k].color;
     ds.push({label:'Aband. '+CH[k].name,data:rows.map(o=>{const p=o[fld];return p[0]?+(100*p[1]/p[0]).toFixed(1):null;}),borderColor:col,backgroundColor:col,borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});
     ds.push({label:'Homolog. '+CH[k].name,data:rows.map(o=>{const p=o[fld],r=abHom(p[0],p[1],p[2]||0);return r==null?null:+(100*r).toFixed(1);}),borderColor:col,backgroundColor:col,borderDash:[5,4],borderWidth:2.2,tension:.3,spanGaps:true,pointRadius:labels.length>26?0:3});});
   if(!window.Chart)return;if(chAb)chAb.destroy();
@@ -558,9 +560,9 @@ function renderCalls(){
   let h='<thead><tr><th>Semana</th><th>Rango</th><th>Cantidad</th><th>Atendidas</th><th>Aband.</th><th title="Abandono homologado: excluye abandonos dentro de los '+RING+'s de ring (no imputables). = aband.>'+RING+'s / (ofrecidas − aband.≤'+RING+'s)">Aband. homolog.</th><th>T. Espera</th><th>TMO</th><th class="cg">SLA</th></tr></thead><tbody>';
   const line=(label,rng,cant,atend,ab,abH,asaS,asaN,slaD,slaN,tt,rc)=>{const abp=cant?ab/cant:null,abhp=abHom(cant,ab,abH),asaV=asaN?asaS/asaN:null,slaV=slaD?slaN/slaD:null;
     return '<tr class="'+(tt?'tot':(rc||''))+'"><td>'+label+'</td><td>'+rng+'</td><td>'+cant.toLocaleString('es-PE')+'</td><td>'+atend.toLocaleString('es-PE')+'</td><td class="'+abCls(abp)+'">'+(abp==null?'-':(abp*100).toFixed(1)+'%')+'</td><td class="'+abCls(abhp)+'">'+(abhp==null?'-':(abhp*100).toFixed(1)+'%')+'</td><td>'+fmtSec(asaV)+'</td><td>—</td><td class="'+cls(slaV)+'">'+fmt(slaV)+'</td></tr>';};
-  const V=src=>{const off=aggCh(src,c=>c.k==='C'?'ac':'ak',cs),cant=off[0],ab=off[1],atend=cant-ab,
-    asa=aggCh(src,c=>c.k==='C'?'rcc':'rck',cs),s=aggCh(src,c=>c.ln,cs);
-    let abH=0;cs.forEach(c=>{abH+=(src[c.k==='C'?'ac':'ak'][2]||0);});
+  const V=src=>{const off=aggCh(src,c=>FK[c.k].a,cs),cant=off[0],ab=off[1],atend=cant-ab,
+    asa=aggCh(src,c=>FK[c.k].rc,cs),s=aggCh(src,c=>c.ln,cs);
+    let abH=0;cs.forEach(c=>{abH+=(src[FK[c.k].a][2]||0);});
     return {cant,atend,ab,abH,asa,s};};
   let T={c:0,at:0,ab:0,abH:0,aS:0,aN:0,sD:0,sN:0};
   rows.forEach(o=>{const v=V(weekAgg(o)),op=weeksOpen.has(o.label),
@@ -578,7 +580,7 @@ function renderWa(){
   let h='<thead><tr><th>Semana</th><th>Rango</th><th>Cantidad</th><th>T. 1ª Resp</th><th>TMO</th><th class="wg">SLA</th></tr></thead><tbody>';
   const line=(label,rng,cant,frS,frN,tmS,tmN,slaD,slaN,tt,rc)=>{const frV=frN?frS/frN:null,tmV=tmN?tmS/tmN:null,slaV=slaD?slaN/slaD:null;
     return '<tr class="'+(tt?'tot':(rc||''))+'"><td>'+label+'</td><td>'+rng+'</td><td>'+cant.toLocaleString('es-PE')+'</td><td>'+fmtSec(frV)+'</td><td>'+fmtDur(tmV)+'</td><td class="'+cls(slaV)+'">'+fmt(slaV)+'</td></tr>';};
-  const V=src=>{const s=aggCh(src,c=>c.wn,cs),fr=aggCh(src,c=>c.k==='C'?'rwc':'rwk',cs),tm=aggCh(src,c=>c.k==='C'?'tc':'tk',cs);return {cant:s[0],fr,tm,s};};
+  const V=src=>{const s=aggCh(src,c=>c.wn,cs),fr=aggCh(src,c=>FK[c.k].rw,cs),tm=aggCh(src,c=>FK[c.k].t,cs);return {cant:s[0],fr,tm,s};};
   let T={c:0,fS:0,fN:0,tS:0,tN:0,sD:0,sN:0};
   rows.forEach(o=>{const v=V(weekAgg(o)),op=weeksOpen.has(o.label),
     tog='<span class="wktog" data-wk="'+o.label+'">'+(op?'▾':'▸')+'</span>';
@@ -600,7 +602,7 @@ function heatLegend(view,info){
 function renderHeatInto(metric,elId,legId){
   const H=DATA[mode].heat,metricG=H[metric],chK=heatKey();
   const selKeys=H.weeks.filter(w=>isSel(w.label)).map(w=>w.key);
-  const nSel=selKeys.length||1,chs2=chK==='Total'?['Central','Conecta Conductor']:[chK];
+  const nSel=selKeys.length||1,chs2=chK==='Total'?['Central','Conecta Conductor','Conecta 2L','Otros']:[chK];
   const grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
   selKeys.forEach(k=>{const wg=metricG[k];if(!wg)return;chs2.forEach(cc=>{const g=wg[cc];if(!g)return;
     for(let dd=0;dd<7;dd++)for(let h=0;h<24;h++){grid[dd][h][0]+=g[dd][h][0];grid[dd][h][1]+=g[dd][h][1];}});});
@@ -638,7 +640,7 @@ function abColor(p){const t=p<=0.04?0:p>=0.25?1:(p-0.04)/0.21;return 'hsl('+Math
 function renderAbHeat(){
   const H=DATA[mode].heat;if(!H||!H.ab){$('hmAb').innerHTML='<tbody><tr><td class="rl">Sin datos.</td></tr></tbody>';$('hmLegAb').innerHTML='';return;}
   const chK=heatKey(),selKeys=H.weeks.filter(w=>isSel(w.label)).map(w=>w.key),nSel=selKeys.length||1;
-  const chs2=chK==='Total'?['Central','Conecta Conductor']:[chK];
+  const chs2=chK==='Total'?['Central','Conecta Conductor','Conecta 2L','Otros']:[chK];
   const grid=Array.from({length:7},()=>Array.from({length:24},()=>[0,0]));
   selKeys.forEach(k=>{const wg=H.ab[k];if(!wg)return;chs2.forEach(cc=>{const g=wg[cc];if(!g)return;
     for(let dd=0;dd<7;dd++)for(let h=0;h<24;h++){grid[dd][h][0]+=g[dd][h][0];grid[dd][h][1]+=g[dd][h][1];}});});
@@ -936,11 +938,12 @@ function fbHtml(f,x){let h='<div class="fbbox">';
   return h+'</div>';}
 function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
   const wks=(P.weeks||[]).filter(w=>isSel(w.label)),jor=P.jornada||28800,PES=DATA.pesos||{volumen:25,sla:30,velocidad:20,ocupacion:25};
-  const L2=DATA.linea2||{},F=['llam','chats','slad','slah','frts','frtn','tmos','tmon','pausa'];
+  const AP=DATA.aparte||[],EX=new Set(DATA.excl_prod||[]),F=['llam','chats','slad','slah','frts','frtn','tmos','tmon','pausa'];
   const subWk=(o,keep)=>{const ds=(o.days||[]).filter(keep);if(!ds.length)return null;if(ds.length===(o.days||[]).length)return o;
     const a={days:ds,ndias:ds.length,nexc:ds.filter(d=>d.exc).length};F.forEach(f=>a[f]=ds.reduce((t,d)=>t+(d[f]||0),0));return a;};
-  const rows=[];P.rows.forEach(r=>{const d0=L2[r.name.toLowerCase()];if(!d0){rows.push(r);return;}
-    const A={name:r.name,wk:{}},B={name:r.name,wk:{},l2:true};
+  const rows=[];P.rows.forEach(r=>{const nm=r.name.toLowerCase();if(EX.has(nm))return;
+    let gi=-1,d0=null;AP.forEach((g,i)=>{if(gi<0&&g[1][nm]){gi=i;d0=g[1][nm];}});if(gi<0){rows.push(r);return;}
+    const A={name:r.name,wk:{}},B={name:r.name,wk:{},grp:gi+1};
     Object.keys(r.wk).forEach(k=>{const o=r.wk[k];const a=subWk(o,d=>d.k<d0),b=subWk(o,d=>d.k>=d0);if(a)A.wk[k]=a;if(b)B.wk[k]=b;});
     if(Object.keys(A.wk).length)rows.push(A);if(Object.keys(B.wk).length)rows.push(B);});
   let list=rows.map(r=>{let llam=0,chats=0,slad=0,slah=0,frts=0,frtn=0,tmos=0,tmon=0,pausa=0,ndias=0,nexc=0;
@@ -948,7 +951,7 @@ function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
     const atenc=llam+chats;if(!ndias&&!atenc)return null;
     const sla=slad?slah/slad:null,frt=frtn?frts/frtn:null,tmo=tmon?tmos/tmon:null;
     let worst=null;wks.forEach(w=>{const o=r.wk[w.label];if(o&&o.days)o.days.forEach(d=>{if(d.slad>=5){const v=d.slah/d.slad;if(!worst||v<worst.v)worst={v,lab:DOWL[d.dw]+' '+d.dt};}});});
-    return {name:r.name,l2:!!r.l2,src:r,worst,ndias,llam,chats,atenc,atencDia:ndias?atenc/ndias:0,sla,frt,tmo,
+    return {name:r.name,grp:r.grp||0,src:r,worst,ndias,llam,chats,atenc,atencDia:ndias?atenc/ndias:0,sla,frt,tmo,
       pctPausa:ndias?pausa/(jor*ndias):null,adher:ndias?(ndias-nexc)/ndias:null};}).filter(Boolean);
   const scoreGroup=g=>{const maxAD=Math.max(1,...g.map(x=>x.atencDia));
     const idx=x=>{const d=[];d.push([PES.volumen,Math.min(x.atencDia/maxAD,1)*100]);
@@ -961,9 +964,9 @@ function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
     const tmoL=g.filter(x=>x.tmo!=null),tD=g.reduce((a,x)=>a+x.ndias,0),tA=g.reduce((a,x)=>a+x.atenc,0);
     const team={tmo:tmoL.length?tmoL.reduce((a,x)=>a+x.tmo,0)/tmoL.length:null,ad:tD?tA/tD:null};
     g.forEach(x=>x.fb=prodFeedback(x,team));return g;};
-  const G1=scoreGroup(list.filter(x=>!x.l2)),G2=scoreGroup(list.filter(x=>x.l2));
+  const G1=scoreGroup(list.filter(x=>!x.grp)),GA=AP.map((g,i)=>scoreGroup(list.filter(x=>x.grp===i+1)));
   prodAgNames=[...new Set(list.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es'));fillProdAg();
-  const full=list.length,S1=G1.filter(x=>prodAgOn(x.name)),S2=G2.filter(x=>prodAgOn(x.name));
+  const full=list.length,S1=G1.filter(x=>prodAgOn(x.name)),SA=GA.map(g=>g.filter(x=>prodAgOn(x.name)));
   const pp=v=>v==null?'-':(v*100).toFixed(0)+'%';
   const rowH=x=>{const op=prodOpen.has(x.name),tog='<span class="prodtog" data-ag="'+x.name.replace(/"/g,'&quot;')+'">'+(op?'▾':'▸')+'</span>';
     let r='<tr><td>'+tog+x.name+(prodAgSel?' <span style="color:var(--faint);font-size:11px;font-weight:500">#'+x.rank+' de '+x.of+'</span>':'')+'</td><td>'+x.ndias+'</td><td>'+x.atenc+'</td><td>'+x.atencDia.toFixed(1)+'</td><td>'+x.llam+'</td><td>'+x.chats+'</td><td class="'+cls(x.sla)+'">'+fmt(x.sla)+'</td><td>'+fmtSec(x.frt)+'</td><td>'+fmtDur(x.tmo)+'</td><td class="'+(x.pctPausa!=null&&x.pctPausa>0.15?'b':x.pctPausa!=null&&x.pctPausa>0.10?'a':'')+'">'+pp(x.pctPausa)+'</td><td class="'+(x.adher!=null&&x.adher<0.8?'b':x.adher!=null&&x.adher<0.95?'a':'')+'">'+pp(x.adher)+'</td><td class="'+scoreCls(x.score)+'">'+(x.score==null?'-':x.score.toFixed(0))+'</td><td style="text-align:left;white-space:normal;min-width:150px">'+(x.fb.ch.length?x.fb.ch.map(c=>'<span class="fbchip">'+c+'</span>').join(''):'<span class="fbchip ok">En meta</span>')+'</td></tr>';
@@ -977,14 +980,14 @@ function renderProd(){const P=DATA[mode].prod;if(!P||!$('tbProd'))return;
     return '<tr class="tot"><td>'+lab+' ('+g.length+')</td><td>'+T.d+'</td><td>'+T.at+'</td><td>'+(T.d?(T.at/T.d).toFixed(1):'0')+'</td><td>'+T.ll+'</td><td>'+T.ch+'</td><td class="'+cls(as)+'">'+fmt(as)+'</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="'+scoreCls(asc)+'">'+(asc==null?'-':asc.toFixed(0))+'</td><td></td></tr>';};
   let h='<thead><tr><th>Agente</th><th>Días</th><th>Atenc.</th><th>/día</th><th>Llam</th><th>Chats</th><th class="wg">SLA WA</th><th>FRT WA</th><th>TMO WA</th><th>% Pausa</th><th>Adher.</th><th>Índice</th><th style="text-align:left">A trabajar</th></tr></thead><tbody>';
   S1.forEach(x=>h+=rowH(x));h+=totH(S1,prodAgSel?'Selección · Customer Care':'Equipo Customer Care');
-  if(S2.length){h+='<tr class="l2head"><td colspan="13">2ª línea · Conecta <span>— otro equipo: no entra en el ranking, el Índice ni el total de Customer Care; su Índice se calcula sólo entre ellos</span></td></tr>';
-    S2.forEach(x=>h+=rowH(x));h+=totH(S2,'Total 2ª línea');}
+  SA.forEach((g,i)=>{if(!g.length)return;h+='<tr class="l2head"><td colspan="13">'+AP[i][0]+' <span>— otro equipo: no entra en el ranking, el Índice ni el total de Customer Care; su Índice se calcula sólo entre ellos</span></td></tr>';
+    g.forEach(x=>h+=rowH(x));h+=totH(g,'Total '+AP[i][0]);});
   if($('prodFb')){const srt=g=>g.slice().sort((a,b)=>b.fb.w.length-a.fb.w.length||((a.score==null?999:a.score)-(b.score==null?999:b.score)));
     const card=x=>'<div class="fbcard"><h4><span>'+x.name+'</span><span class="'+scoreCls(x.score)+'" style="font-size:12px;padding:1px 8px;border-radius:6px">Índice '+(x.score==null?'-':x.score.toFixed(0))+'</span></h4>'+fbHtml(x.fb,x)+'</div>';
     let fh=srt(S1).map(card).join('');
-    if(S2.length)fh+='<div class="fbl2">2ª línea · Conecta <span>(volumen y TMO comparados con el promedio de la 2ª línea)</span></div>'+srt(S2).map(card).join('');
+    SA.forEach((g,i)=>{if(g.length)fh+='<div class="fbl2">'+AP[i][0]+' <span>(volumen y TMO comparados con el promedio de su propio grupo)</span></div>'+srt(g).map(card).join('');});
     $('prodFb').innerHTML=fh||'<div class="sub2">Sin agentes para mostrar.</div>';}
-  $('tbProd').innerHTML=h+((S1.length||S2.length)?'':'<tr><td>'+(full?'Ningún agente seleccionado.':'Sin datos.')+'</td></tr>')+'</tbody>';}
+  $('tbProd').innerHTML=h+((S1.length||SA.some(g=>g.length))?'':'<tr><td>'+(full?'Ningún agente seleccionado.':'Sin datos.')+'</td></tr>')+'</tbody>';}
 function setAllProd(open){const P=DATA[mode].prod;if(!P)return;if(open)(P.rows||[]).filter(r=>prodAgOn(r.name)).forEach(r=>prodOpen.add(r.name));else prodOpen.clear();renderProd();}
 
 /* ---- conexión por agente ---- */
@@ -1051,7 +1054,7 @@ function setAllConex(open){const C=DATA[mode].conex;if(!C)return;if(open)(C.rows
 /* ---- render maestro ---- */
 /* ---- mensajes del agente por conversación (WhatsApp) ---- */
 let chMsj=null;
-function msjKey(){return chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Total';}
+function msjKey(){return CHKEY[chanSel]||'Total';}
 function renderMsj(){const M=DATA[mode].msj,tb=$('tbMsj');if(!tb)return;
   if(!M||!M.rows||!M.rows.length){$('msjKpis').innerHTML='';tb.innerHTML='<tbody><tr><td>Aún no hay datos de mensajes. Se cargan con la actualización diaria.</td></tr></tbody>';return;}
   const ck=msjKey(),wks=M.weeks.filter(w=>isSel(w.label)),Z=()=>[0,0,0,0,0,0],add=(a,c)=>{if(c)for(let i=0;i<6;i++)a[i]+=c[i];};
@@ -1140,7 +1143,7 @@ function renderCtDet(){const name=ctAgSel,tb=$('tbCtDet');if(!tb)return;
   let hh='<thead><tr><th></th>'+[...Array(24).keys()].map(x=>'<th>'+pad(x)+'</th>').join('')+'<th>Total</th></tr></thead><tbody>';
   dayOrder().forEach(dw=>{const row=G[dw],s=row.reduce((a,b)=>a+b,0);hh+='<tr><td class="rl">'+DOWL[dw]+'</td>'+row.map(v=>v?'<td style="background:rgba(214,69,65,'+(0.18+0.82*v/mx).toFixed(2)+')" title="'+v+' llamadas">'+v+'</td>':'<td class="na">·</td>').join('')+'<td class="rl">'+s+'</td></tr>';});
   hh+='</tbody>';$('hmCt').innerHTML=hh;
-  const LIM=1000,cn=c=>c==='C'?'Central':'C. Conductor';
+  const LIM=1000,cn=c=>(CH[c]||{}).name||c;
   let h='<thead><tr><th>Fecha</th><th>Hora</th><th>Día</th><th>Canal</th><th>Campaña</th><th>Anexo</th><th>Unique ID</th><th>Duración</th><th>Espera</th><th>Colgó</th></tr></thead><tbody>';
   R.slice(0,LIM).forEach(r=>{h+='<tr><td>'+ctFecha(r[1])+'</td><td>'+r[2]+'</td><td>'+DOWL[r[3]]+'</td><td>'+cn(r[4])+'</td><td>'+r[5]+'</td><td>'+r[6]+'</td><td>'+r[8]+'</td><td class="'+(r[9]<=2?'b':'')+'">'+r[9]+' s</td><td>'+(r[10]==null?'-':r[10]+' s')+'</td><td class="'+(r[11]==='A'?'a':'')+'">'+(CT_CG[r[11]]||r[11]||'-')+'</td></tr>';});
   if(!R.length)h+='<tr><td colspan="10">Sin llamadas cortas en las semanas elegidas.</td></tr>';
@@ -1151,7 +1154,7 @@ function ctLoadExcel(cb){if(window.ExcelJS)return cb(true);const sc=document.cre
 function ctSortedRows(name){return ctRowsSel(name).slice().sort((a,b)=>(a[1]+a[2]).localeCompare(b[1]+b[2]));}
 function ctCsv(name,R){const NL=String.fromCharCode(10),q=v=>'"'+String(v==null?'':v).split('"').join('""')+'"';
   const lines=[['Agente','Fecha','Hora','Dia','Canal','Campaña','Anexo','Unique ID','Duracion (s)','Espera (s)','Colgo'].map(q).join(',')];
-  R.forEach(r=>lines.push([name,ctFecha(r[1]),r[2],DOWF[r[3]],r[4]==='C'?'Central':'Conecta Conductor',r[5],r[6],r[8],r[9],r[10],CT_CG[r[11]]||r[11]].map(q).join(',')));
+  R.forEach(r=>lines.push([name,ctFecha(r[1]),r[2],DOWF[r[3]],(CH[r[4]]||{}).name||r[4],r[5],r[6],r[8],r[9],r[10],CT_CG[r[11]]||r[11]].map(q).join(',')));
   ctSave(new Blob([String.fromCharCode(65279)+lines.join(NL)],{type:'text/csv'}),'llamadas_cortas_'+name.split(' ').join('_')+'.csv');}
 function ctSave(blob,fn){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();}
 function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),btn=$('ctCsv'),o=btn.textContent;btn.textContent='Generando…';
@@ -1161,7 +1164,7 @@ function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),
     ws.columns=[['Fecha',11],['Hora',9],['Día',11],['Canal',16],['Campaña',12],['Anexo',15],['Unique ID',20],['Duración (s)',11],['Espera (s)',10],['Colgó',13],['Escuchada (Sí/No)',14],['Hallazgo',24],['Comentario',36]].map(([h,w])=>({header:h,width:w}));
     const hr=ws.getRow(1);hr.height=32;hr.eachCell(c=>{c.font={name:F,bold:true,color:{argb:'FFFFFFFF'}};c.fill=HD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};});
     R.forEach(r=>{const [y,m,d]=r[1].split('-').map(Number);
-      const row=ws.addRow([new Date(Date.UTC(y,m-1,d)),r[2],DOWF[r[3]],r[4]==='C'?'Central':'Conecta Conductor',r[5],r[6],String(r[8]),r[9],r[10],CT_CG[r[11]]||r[11]||'',null,null,null]);
+      const row=ws.addRow([new Date(Date.UTC(y,m-1,d)),r[2],DOWF[r[3]],(CH[r[4]]||{}).name||r[4],r[5],r[6],String(r[8]),r[9],r[10],CT_CG[r[11]]||r[11]||'',null,null,null]);
       row.eachCell({includeEmpty:true},(c,i)=>{c.font={name:F,size:10};c.border=BD;if(i>=11)c.fill=IN;});
       row.getCell(1).numFmt='dd/mm/yyyy';row.getCell(7).numFmt='@';
       row.getCell(11).dataValidation={type:'list',allowBlank:true,formulae:['"Sí,No"']};
@@ -1169,7 +1172,7 @@ function ctXlsx(){const name=ctAgSel;if(!name)return;const R=ctSortedRows(name),
     ws.autoFilter={from:'A1',to:'M'+Math.max(1,R.length+1)};
     const act=ctWkActive(),wl=DATA[mode].weeks.filter(o=>act.includes(o.label)),rng=wl.length?(wl[0].rng.split(' – ')[0]+' al '+wl[wl.length-1].rng.split(' – ').pop()):'';
     const s2=wb.addWorksheet('Info');s2.getColumn(1).width=30;s2.getColumn(2).width=60;
-    [['Agente',name],['Semanas',(wl.length?wl[0].label+' a '+wl[wl.length-1].label+' ('+rng+')':'')],['Canal',chanSel==='C'?'Central':chanSel==='CC'?'Conecta Conductor':'Todos'],['Llamadas de ≤10 s',R.length],['De ≤2 s',R.filter(r=>r[9]<=2).length],['Cortó el agente',R.filter(r=>r[11]==='A').length],['Criterio','Llamada ATENDIDA con tiempo de atención de 10 s o menos (reporte de Campañas de Cereza)'],['Cómo usar','Busca cada llamada en Cereza o Speech Analytics con el Unique ID y completa las columnas amarillas.']]
+    [['Agente',name],['Semanas',(wl.length?wl[0].label+' a '+wl[wl.length-1].label+' ('+rng+')':'')],['Canal',CH[chanSel]?CH[chanSel].name:'Todos'],['Llamadas de ≤10 s',R.length],['De ≤2 s',R.filter(r=>r[9]<=2).length],['Cortó el agente',R.filter(r=>r[11]==='A').length],['Criterio','Llamada ATENDIDA con tiempo de atención de 10 s o menos (reporte de Campañas de Cereza)'],['Cómo usar','Busca cada llamada en Cereza o Speech Analytics con el Unique ID y completa las columnas amarillas.']]
       .forEach(([k,v])=>{const rw=s2.addRow([k,v]);rw.getCell(1).font={name:F,bold:true};rw.getCell(2).font={name:F};});
     wb.xlsx.writeBuffer().then(buf=>ctSave(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'Llamadas_cortas_'+name.split(' ').join('_')+'.xlsx'));});}
 /* ---- horario (editor) ---- */
